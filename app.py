@@ -16,6 +16,7 @@ import json
 from threading import Thread
 import time
 import schedule
+import atexit
 
 app = Flask(__name__)
 CORS(app)
@@ -31,6 +32,9 @@ UPLOAD_FOLDER = 'attachments'
 
 # Ensure upload folder exists
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# Global flag for email checker
+email_checker_running = False
 
 class TicketingSystem:
     def __init__(self):
@@ -199,12 +203,16 @@ ticketing = TicketingSystem()
 class EmailProcessor:
     def __init__(self):
         self.processed_emails = set()
+        print(f"EmailProcessor initialized with user: {EMAIL_USER}")
     
     def connect_imap(self):
         """Connect to IMAP server"""
         try:
+            print(f"Attempting IMAP connection to {EMAIL_HOST}:{EMAIL_PORT}")
             mail = imaplib.IMAP4_SSL(EMAIL_HOST, EMAIL_PORT)
+            print(f"Logging in with user: {EMAIL_USER}")
             mail.login(EMAIL_USER, EMAIL_PASS)
+            print("IMAP connection successful!")
             return mail
         except Exception as e:
             print(f"IMAP connection failed: {e}")
@@ -217,6 +225,8 @@ class EmailProcessor:
             sender = msg.get('from', '')
             sender_email = sender.split('<')[-1].replace('>', '') if '<' in sender else sender
             sender_name = sender.split('<')[0].strip() if '<' in sender else sender_email
+            
+            print(f"Processing email from {sender_email}, subject: {subject}")
             
             # Get email content
             content = ""
@@ -257,8 +267,10 @@ class EmailProcessor:
     
     def check_emails(self):
         """Check for new emails and process them"""
+        print("Checking for new emails...")
         mail = self.connect_imap()
         if not mail:
+            print("Failed to connect to IMAP server")
             return
         
         try:
@@ -267,6 +279,7 @@ class EmailProcessor:
             
             if status == 'OK':
                 email_ids = messages[0].split()
+                print(f"Found {len(email_ids)} unread emails")
                 
                 for email_id in email_ids:
                     status, msg_data = mail.fetch(email_id, '(RFC822)')
@@ -283,6 +296,7 @@ class EmailProcessor:
             
             mail.close()
             mail.logout()
+            print("Email check completed")
             
         except Exception as e:
             print(f"Error checking emails: {e}")
@@ -290,6 +304,7 @@ class EmailProcessor:
     def send_email(self, to_email, subject, content, ticket_id):
         """Send email response"""
         try:
+            print(f"Sending email to {to_email} for ticket {ticket_id}")
             msg = MIMEMultipart()
             msg['From'] = EMAIL_USER
             msg['To'] = to_email
@@ -305,6 +320,7 @@ class EmailProcessor:
             
             # Log response in database
             ticketing.add_response(ticket_id, 'outgoing', EMAIL_USER, content)
+            print(f"Email sent successfully to {to_email}")
             
             return True
             
@@ -379,20 +395,50 @@ def download_attachment(attachment_id):
     
     return jsonify({'error': 'File not found'}), 404
 
-def email_checker():
-    """Background email checker"""
-    while True:
+# Add a manual email check endpoint for testing
+@app.route('/api/check-emails', methods=['POST'])
+def manual_email_check():
+    """Manual email check for testing"""
+    try:
+        email_processor.check_emails()
+        return jsonify({'success': True, 'message': 'Email check completed'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+def email_checker_background():
+    """Background email checker function"""
+    global email_checker_running
+    email_checker_running = True
+    print("Email checker background thread started")
+    
+    while email_checker_running:
         try:
             email_processor.check_emails()
             time.sleep(30)  # Check every 30 seconds
         except Exception as e:
-            print(f"Email checker error: {e}")
+            print(f"Email checker background error: {e}")
             time.sleep(60)  # Wait longer if there's an error
 
-# Start email checker in background
+def stop_email_checker():
+    """Stop email checker on app shutdown"""
+    global email_checker_running
+    email_checker_running = False
+    print("Email checker stopped")
+
+# Register cleanup function
+atexit.register(stop_email_checker)
+
+# Start email checker thread when app starts
+def start_email_checker():
+    if not email_checker_running:
+        email_thread = Thread(target=email_checker_background, daemon=True)
+        email_thread.start()
+        print("Started email checker thread")
+
 if __name__ == '__main__':
     # Start email checker thread
-    email_thread = Thread(target=email_checker, daemon=True)
-    email_thread.start()
-    
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    start_email_checker()
+    app.run(debug=False, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+else:
+    # For production (Gunicorn), start the email checker
+    start_email_checker()
