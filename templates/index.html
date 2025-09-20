@@ -17,6 +17,7 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             color: #333;
+            overflow-x: hidden;
         }
 
         .container {
@@ -26,203 +27,168 @@
         }
 
         .header {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
             border-radius: 16px;
-            padding: 20px 30px;
-            margin-bottom: 20px;
-            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
-            border: 1px solid rgba(255, 255, 255, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .header h1 {
+            color: white;
             font-size: 28px;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: none;
             font-weight: 600;
-            color: #1d1d1f;
-            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #007aff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0056cc;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.3);
         }
 
         .stats {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 20px;
-            margin-top: 15px;
-        }
-
-        .stat-card {
-            background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
-            color: white;
-            padding: 20px;
-            border-radius: 12px;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-2px);
-        }
-
-        .stat-card.open { background: linear-gradient(135deg, #4ecdc4, #6bccc4); }
-        .stat-card.closed { background: linear-gradient(135deg, #45b7d1, #5bc5d1); }
-        .stat-card.pending { background: linear-gradient(135deg, #f9ca24, #f0c24a); }
-        .stat-card.total { background: linear-gradient(135deg, #6c5ce7, #a29bfe); }
-        .stat-card.avg-response { background: linear-gradient(135deg, #fd79a8, #fdcb6e); }
-
-        .stat-number {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-
-        .stat-label {
-            font-size: 12px;
-            opacity: 0.9;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .analytics-section {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
         }
 
-        .chart-container {
+        .stat-card {
             background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
+            backdrop-filter: blur(10px);
             border-radius: 16px;
-            padding: 25px;
+            padding: 24px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
             box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
-            border: 1px solid rgba(255, 255, 255, 0.18);
         }
 
-        .chart-container h3 {
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: #1d1d1f;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .analytics-section {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
             font-size: 18px;
             font-weight: 600;
             color: #1d1d1f;
-            margin-bottom: 20px;
         }
 
-        .search-section {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
-            border: 1px solid rgba(255, 255, 255, 0.18);
+        .card-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .filter-select {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            background: white;
+            font-size: 14px;
         }
 
         .search-container {
             display: grid;
-            grid-template-columns: 2fr 1fr 1fr;
+            grid-template-columns: 1fr auto auto;
             gap: 15px;
-            align-items: end;
+            margin-bottom: 30px;
         }
 
-        .search-group {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .search-group label {
-            font-size: 12px;
-            font-weight: 600;
-            color: #666;
-            margin-bottom: 5px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .search-input {
-            padding: 12px 16px;
-            border: 2px solid #e1e5e9;
-            border-radius: 8px;
-            font-size: 14px;
-            font-family: inherit;
-            transition: all 0.3s ease;
-            background: white;
-        }
-
-        .search-input:focus {
-            outline: none;
-            border-color: #007aff;
-            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
-        }
-
-        .search-btn {
-            background: linear-gradient(135deg, #007aff, #0056cc);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .search-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 8px 25px rgba(0, 122, 255, 0.3);
-        }
-
-        .clear-btn {
-            background: linear-gradient(135deg, #8e8e93, #636366);
-            margin-left: 10px;
-        }
-
-        .clear-btn:hover {
-            box-shadow: 0 8px 25px rgba(142, 142, 147, 0.3);
-        }
-
-        .filters {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .filter-btn {
-            background: rgba(255, 255, 255, 0.9);
-            border: none;
-            padding: 10px 20px;
-            border-radius: 25px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
+        .search-box {
             position: relative;
         }
 
-        .filter-btn:hover,
-        .filter-btn.active {
-            background: #007aff;
+        .search-input {
+            width: 100%;
+            padding: 15px 15px 15px 45px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
             color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 122, 255, 0.3);
+            font-size: 16px;
         }
 
-        .filter-btn .count {
-            background: rgba(0, 0, 0, 0.1);
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 11px;
-            margin-left: 8px;
-            font-weight: 700;
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
         }
 
-        .filter-btn.active .count {
-            background: rgba(255, 255, 255, 0.2);
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.7);
         }
 
         .tickets-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
             gap: 20px;
+            width: 100%;
         }
 
         .ticket-card {
@@ -236,6 +202,9 @@
             cursor: pointer;
             position: relative;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 280px;
         }
 
         .ticket-card:hover {
@@ -243,20 +212,11 @@
             box-shadow: 0 20px 40px rgba(31, 38, 135, 0.5);
         }
 
-        .ticket-card.priority-urgent {
-            border-left: 4px solid #ff3b30;
-        }
-
-        .ticket-card.priority-high {
-            border-left: 4px solid #ff9500;
-        }
-
-        .ticket-card.priority-normal {
-            border-left: 4px solid #34c759;
-        }
-
-        .ticket-card.priority-low {
-            border-left: 4px solid #8e8e93;
+        .ticket-content {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
         .ticket-header {
@@ -264,6 +224,7 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 12px;
+            flex-shrink: 0;
         }
 
         .ticket-id {
@@ -295,12 +256,18 @@
             color: #1d1d1f;
             margin-bottom: 8px;
             line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            flex-shrink: 0;
         }
 
         .ticket-sender {
             font-size: 14px;
             color: #666;
             margin-bottom: 12px;
+            flex-shrink: 0;
         }
 
         .ticket-preview {
@@ -312,6 +279,7 @@
             -webkit-line-clamp: 3;
             -webkit-box-orient: vertical;
             overflow: hidden;
+            flex: 1;
         }
 
         .ticket-meta {
@@ -319,6 +287,7 @@
             justify-content: space-between;
             align-items: center;
             margin-top: auto;
+            flex-shrink: 0;
         }
 
         .status-badge {
@@ -348,251 +317,63 @@
             background: rgba(0, 0, 0, 0.5);
             backdrop-filter: blur(5px);
             z-index: 1000;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            justify-content: center;
+            align-items: center;
         }
 
         .modal-content {
             background: white;
-            margin: 5% auto;
-            padding: 0;
             border-radius: 16px;
             width: 90%;
             max-width: 800px;
-            max-height: 80vh;
+            max-height: 90vh;
             overflow-y: auto;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            animation: slideIn 0.3s ease;
+            padding: 30px;
+            position: relative;
         }
 
-        @keyframes slideIn {
-            from { transform: translateY(-50px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
         }
 
         .modal-header {
-            padding: 24px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
             border-bottom: 1px solid #eee;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
         }
 
-        .modal-header h2 {
-            font-size: 20px;
-            font-weight: 600;
-            color: #1d1d1f;
-        }
-
-        .close-btn {
-            background: none;
-            border: none;
+        .modal-title {
             font-size: 24px;
-            cursor: pointer;
-            color: #666;
-            padding: 0;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
+            font-weight: 700;
+            color: #1d1d1f;
+            margin-bottom: 5px;
         }
 
-        .close-btn:hover {
-            background: #f5f5f5;
-            color: #333;
+        .modal-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 14px;
+            color: #666;
         }
 
         .modal-body {
-            padding: 24px;
+            margin-bottom: 30px;
         }
 
-        .conversation {
-            margin-bottom: 24px;
-        }
-
-        .message {
-            margin-bottom: 20px;
-            padding: 16px;
-            border-radius: 12px;
-            border-left: 4px solid #007aff;
-        }
-
-        .message.outgoing {
-            background: #f8f9ff;
-            border-left-color: #34c759;
-            margin-left: 20px;
-        }
-
-        .message.incoming {
-            background: #f5f5f7;
-            margin-right: 20px;
-        }
-
-        .message-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-
-        .message-sender {
-            font-weight: 600;
-            color: #1d1d1f;
-        }
-
-        .message-time {
-            font-size: 12px;
-            color: #666;
-        }
-
-        .message-content {
+        .modal-message {
             line-height: 1.6;
-            color: #333;
+            margin-bottom: 25px;
         }
 
-        .reply-form {
-            background: #f5f5f7;
-            border-radius: 12px;
-            padding: 20px;
-        }
-
-        .reply-form h3 {
-            margin-bottom: 16px;
-            font-size: 16px;
-            color: #1d1d1f;
-        }
-
-        .form-group {
-            margin-bottom: 16px;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 12px 16px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 14px;
-            font-family: inherit;
-            transition: border-color 0.3s ease;
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: #007aff;
-            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
-        }
-
-        textarea.form-control {
-            min-height: 120px;
-            resize: vertical;
-        }
-
-        .btn {
-            background: #007aff;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .btn:hover {
-            background: #0056cc;
-            transform: translateY(-1px);
-        }
-
-        .btn:active {
-            transform: translateY(0);
-        }
-
-        .btn-secondary {
-            background: #8e8e93;
-            margin-left: 10px;
-        }
-
-        .btn-secondary:hover {
-            background: #636366;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #666;
-        }
-
-        .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #007aff;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 16px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #666;
-        }
-
-        .empty-state h3 {
-            font-size: 18px;
-            margin-bottom: 8px;
-            color: #1d1d1f;
-        }
-
-        .no-results {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 16px;
-            padding: 40px;
-            text-align: center;
-            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-        }
-
-        .analytics-insight {
-            background: linear-gradient(135deg, rgba(103, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(103, 126, 234, 0.2);
-        }
-
-        .analytics-insight h4 {
-            font-size: 16px;
-            font-weight: 600;
-            color: #1d1d1f;
-            margin-bottom: 12px;
+        .modal-footer {
             display: flex;
-            align-items: center;
-        }
-
-        .analytics-insight h4::before {
-            content: "💡";
-            margin-right: 8px;
-        }
-
-        .insight-text {
-            font-size: 14px;
-            color: #666;
-            line-height: 1.5;
+            justify-content: flex-end;
+            gap: 10px;
         }
 
         @media (max-width: 768px) {
@@ -613,6 +394,11 @@
                 grid-template-columns: 1fr;
             }
 
+            .ticket-card {
+                height: auto;
+                min-height: 240px;
+            }
+
             .stats {
                 grid-template-columns: repeat(2, 1fr);
             }
@@ -628,638 +414,331 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Support Analytics Dashboard</h1>
-            <p>Advanced ticket management with business intelligence</p>
-            <div class="stats" id="stats">
-                <div class="stat-card open">
-                    <div class="stat-number" id="open-count">0</div>
-                    <div class="stat-label">Open</div>
-                </div>
-                <div class="stat-card closed">
-                    <div class="stat-number" id="closed-count">0</div>
-                    <div class="stat-label">Closed</div>
-                </div>
-                <div class="stat-card pending">
-                    <div class="stat-number" id="pending-count">0</div>
-                    <div class="stat-label">Pending</div>
-                </div>
-                <div class="stat-card total">
-                    <div class="stat-number" id="total-count">0</div>
-                    <div class="stat-label">Total</div>
-                </div>
-                <div class="stat-card avg-response">
-                    <div class="stat-number" id="avg-response">--</div>
-                    <div class="stat-label">Avg Response</div>
-                </div>
+            <h1>Ticket Support Dashboard</h1>
+            <div class="header-actions">
+                <button class="btn btn-primary">New Ticket</button>
+                <button class="btn btn-secondary">Export</button>
             </div>
         </div>
 
-        <div class="analytics-section">
-            <div class="chart-container">
-                <h3>📈 Ticket Trends (Last 7 Days)</h3>
-                <canvas id="ticketTrendChart" height="100"></canvas>
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value">142</div>
+                <div class="stat-label">Total Tickets</div>
             </div>
-            <div class="chart-container">
-                <h3>🥧 Status Distribution</h3>
-                <canvas id="statusChart" height="100"></canvas>
+            <div class="stat-card">
+                <div class="stat-value">24</div>
+                <div class="stat-label">Open Tickets</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">67</div>
+                <div class="stat-label">Closed Today</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">3.2h</div>
+                <div class="stat-label">Avg. Response Time</div>
             </div>
         </div>
 
-        <div class="search-section">
-            <h3 style="margin-bottom: 15px;">🔍 Advanced Search & Filters</h3>
-            <div class="search-container">
-                <div class="search-group">
-                    <label>Search Tickets</label>
-                    <input type="text" class="search-input" id="search-query" placeholder="Search by subject, content, or customer email...">
+        <div class="search-container">
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="search-input" placeholder="Search tickets...">
+            </div>
+            <select class="filter-select">
+                <option>All Status</option>
+                <option>Open</option>
+                <option>Closed</option>
+                <option>Pending</option>
+            </select>
+            <select class="filter-select">
+                <option>All Priorities</option>
+                <option>Urgent</option>
+                <option>High</option>
+                <option>Normal</option>
+                <option>Low</option>
+            </select>
+        </div>
+
+        <div class="tickets-grid">
+            <!-- Sample Ticket 1 -->
+            <div class="ticket-card" data-id="12345">
+                <div class="ticket-content">
+                    <div class="ticket-header">
+                        <span class="ticket-id">#TK-2023-12345</span>
+                        <span class="priority-badge priority-urgent">Urgent</span>
+                    </div>
+                    <h3 class="ticket-subject">Website outage affecting checkout process</h3>
+                    <p class="ticket-sender">From: john.doe@example.com</p>
+                    <p class="ticket-preview">Customers are reporting that they cannot complete purchases on our website. The issue started approximately 45 minutes ago and seems to be affecting all users...</p>
+                    <div class="ticket-meta">
+                        <span class="status-badge status-open">Open</span>
+                        <span class="ticket-time">2 hours ago</span>
+                    </div>
                 </div>
-                <div class="search-group">
-                    <label>Date From</label>
-                    <input type="date" class="search-input" id="date-from">
+            </div>
+
+            <!-- Sample Ticket 2 -->
+            <div class="ticket-card" data-id="12346">
+                <div class="ticket-content">
+                    <div class="ticket-header">
+                        <span class="ticket-id">#TK-2023-12346</span>
+                        <span class="priority-badge priority-high">High</span>
+                    </div>
+                    <h3 class="ticket-subject">Password reset not working for admin accounts</h3>
+                    <p class="ticket-sender">From: admin@company.com</p>
+                    <p class="ticket-preview">Several administrators are reporting that the password reset function is not working for admin-level accounts. They receive the email but the link returns a 404 error...</p>
+                    <div class="ticket-meta">
+                        <span class="status-badge status-pending">Pending</span>
+                        <span class="ticket-time">5 hours ago</span>
+                    </div>
                 </div>
-                <div class="search-group">
-                    <label>Date To</label>
-                    <input type="date" class="search-input" id="date-to">
+            </div>
+
+            <!-- Sample Ticket 3 -->
+            <div class="ticket-card" data-id="12347">
+                <div class="ticket-content">
+                    <div class="ticket-header">
+                        <span class="ticket-id">#TK-2023-12347</span>
+                        <span class="priority-badge priority-normal">Normal</span>
+                    </div>
+                    <h3 class="ticket-subject">Request for additional API access</h3>
+                    <p class="ticket-sender">From: dev.team@partner.com</p>
+                    <p class="ticket-preview">We would like to request additional API permissions to access the reporting endpoints for our integration. Our current access is limited to basic data...</p>
+                    <div class="ticket-meta">
+                        <span class="status-badge status-open">Open</span>
+                        <span class="ticket-time">1 day ago</span>
+                    </div>
                 </div>
             </div>
-            <div style="margin-top: 15px;">
-                <button class="search-btn" onclick="performSearch()">🔍 Search</button>
-                <button class="search-btn clear-btn" onclick="clearSearch()">🗑️ Clear</button>
+
+            <!-- Sample Ticket 4 -->
+            <div class="ticket-card" data-id="12348">
+                <div class="ticket-content">
+                    <div class="ticket-header">
+                        <span class="ticket-id">#TK-2023-12348</span>
+                        <span class="priority-badge priority-low">Low</span>
+                    </div>
+                    <h3 class="ticket-subject">Question about refund policy</h3>
+                    <p class="ticket-sender">From: customer@example.com</p>
+                    <p class="ticket-preview">I would like to know more about your refund policy for annual subscriptions. I purchased a subscription 3 months ago but no longer need the service...</p>
+                    <div class="ticket-meta">
+                        <span class="status-badge status-closed">Closed</span>
+                        <span class="ticket-time">2 days ago</span>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <div class="filters">
-            <button class="filter-btn active" data-status="all">
-                All Tickets <span class="count" id="filter-all-count">0</span>
-            </button>
-            <button class="filter-btn" data-status="open">
-                🟢 Open <span class="count" id="filter-open-count">0</span>
-            </button>
-            <button class="filter-btn" data-status="closed">
-                🔵 Closed <span class="count" id="filter-closed-count">0</span>
-            </button>
-            <button class="filter-btn" data-status="pending">
-                🟡 Pending <span class="count" id="filter-pending-count">0</span>
-            </button>
-        </div>
-
-        <div class="analytics-insight" id="insights">
-            <h4>Smart Insights</h4>
-            <div class="insight-text" id="insight-text">
-                Loading analytics insights...
+            <!-- Sample Ticket 5 -->
+            <div class="ticket-card" data-id="12349">
+                <div class="ticket-content">
+                    <div class="ticket-header">
+                        <span class="ticket-id">#TK-2023-12349</span>
+                        <span class="priority-badge priority-high">High</span>
+                    </div>
+                    <h3 class="ticket-subject">Database connection errors in production</h3>
+                    <p class="ticket-sender">From: alerts@monitoring.com</p>
+                    <p class="ticket-preview">Our monitoring system has detected an increased number of database connection errors in the production environment. The error rate has gone up by 35% in the last hour...</p>
+                    <div class="ticket-meta">
+                        <span class="status-badge status-open">Open</span>
+                        <span class="ticket-time">3 hours ago</span>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <div class="tickets-grid" id="tickets-container">
-            <div class="loading">
-                <div class="spinner"></div>
-                Loading tickets with analytics...
+            <!-- Sample Ticket 6 -->
+            <div class="ticket-card" data-id="12350">
+                <div class="ticket-content">
+                    <div class="ticket-header">
+                        <span class="ticket-id">#TK-2023-12350</span>
+                        <span class="priority-badge priority-normal">Normal</span>
+                    </div>
+                    <h3 class="ticket-subject">Documentation update request</h3>
+                    <p class="ticket-sender">From: technical.writer@company.com</p>
+                    <p class="ticket-preview">The API documentation for the new endpoints is missing several important parameters and examples. Can you please provide the complete specification so I can update the docs...</p>
+                    <div class="ticket-meta">
+                        <span class="status-badge status-pending">Pending</span>
+                        <span class="ticket-time">4 days ago</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Ticket Modal -->
-    <div class="modal" id="ticket-modal">
+    <div class="modal" id="ticketModal">
         <div class="modal-content">
+            <span class="modal-close">&times;</span>
             <div class="modal-header">
-                <h2 id="modal-title">Ticket Details</h2>
-                <button class="close-btn" onclick="closeModal()">&times;</button>
+                <h2 class="modal-title" id="modalSubject">Website outage affecting checkout process</h2>
+                <div class="modal-meta">
+                    <span id="modalId">#TK-2023-12345</span>
+                    <span id="modalPriority">Priority: <span class="priority-urgent">Urgent</span></span>
+                    <span id="modalSender">From: john.doe@example.com</span>
+                </div>
             </div>
-            <div class="modal-body" id="modal-body">
-                <!-- Ticket details will be loaded here -->
+            <div class="modal-body">
+                <p class="modal-message" id="modalMessage">
+                    Customers are reporting that they cannot complete purchases on our website. The issue started approximately 45 minutes ago and seems to be affecting all users. Error messages indicate a problem with the payment gateway integration. Our monitoring shows increased failed requests to the payment API.
+                </p>
+                <div class="modal-attachments">
+                    <h3>Attachments</h3>
+                    <ul id="modalAttachments">
+                        <li><a href="#">error_logs.txt</a></li>
+                        <li><a href="#">screenshot.png</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary">Assign to Me</button>
+                <button class="btn btn-primary">Update Status</button>
             </div>
         </div>
     </div>
 
     <script>
-        let currentFilter = 'all';
-        let tickets = [];
-        let filteredTickets = [];
-        let ticketTrendChart, statusChart;
-
-        // Load tickets on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            loadTickets();
-            setInterval(loadTickets, 30000); // Refresh every 30 seconds
-        });
-
-        async function loadTickets() {
-            try {
-                const response = await fetch('/api/tickets');
-                tickets = await response.json();
-                
-                // Add priority assignment (simulate smart prioritization)
-                tickets = tickets.map(ticket => ({
-                    ...ticket,
-                    priority: assignPriority(ticket)
-                }));
-                
-                updateStats();
-                updateCharts();
-                updateInsights();
-                displayTickets();
-            } catch (error) {
-                console.error('Error loading tickets:', error);
-                document.getElementById('tickets-container').innerHTML = 
-                    '<div class="empty-state"><h3>Error Loading Tickets</h3><p>Please try refreshing the page.</p></div>';
+        // Sample data for the tickets
+        const tickets = [
+            {
+                id: '12345',
+                subject: 'Website outage affecting checkout process',
+                sender: 'john.doe@example.com',
+                priority: 'urgent',
+                status: 'open',
+                time: '2 hours ago',
+                message: 'Customers are reporting that they cannot complete purchases on our website. The issue started approximately 45 minutes ago and seems to be affecting all users. Error messages indicate a problem with the payment gateway integration. Our monitoring shows increased failed requests to the payment API.',
+                attachments: ['error_logs.txt', 'screenshot.png']
+            },
+            {
+                id: '12346',
+                subject: 'Password reset not working for admin accounts',
+                sender: 'admin@company.com',
+                priority: 'high',
+                status: 'pending',
+                time: '5 hours ago',
+                message: 'Several administrators are reporting that the password reset function is not working for admin-level accounts. They receive the email but the link returns a 404 error. This appears to be a routing issue specific to admin subdomains.',
+                attachments: ['admin_logs.zip']
+            },
+            {
+                id: '12347',
+                subject: 'Request for additional API access',
+                sender: 'dev.team@partner.com',
+                priority: 'normal',
+                status: 'open',
+                time: '1 day ago',
+                message: 'We would like to request additional API permissions to access the reporting endpoints for our integration. Our current access is limited to basic data, but we need to generate comprehensive reports for our clients.',
+                attachments: ['api_spec.pdf']
+            },
+            {
+                id: '12348',
+                subject: 'Question about refund policy',
+                sender: 'customer@example.com',
+                priority: 'low',
+                status: 'closed',
+                time: '2 days ago',
+                message: 'I would like to know more about your refund policy for annual subscriptions. I purchased a subscription 3 months ago but no longer need the service. Can I get a partial refund for the remaining period?',
+                attachments: []
+            },
+            {
+                id: '12349',
+                subject: 'Database connection errors in production',
+                sender: 'alerts@monitoring.com',
+                priority: 'high',
+                status: 'open',
+                time: '3 hours ago',
+                message: 'Our monitoring system has detected an increased number of database connection errors in the production environment. The error rate has gone up by 35% in the last hour. This is affecting multiple services that rely on database access.',
+                attachments: ['metrics.png', 'db_logs.txt']
+            },
+            {
+                id: '12350',
+                subject: 'Documentation update request',
+                sender: 'technical.writer@company.com',
+                priority: 'normal',
+                status: 'pending',
+                time: '4 days ago',
+                message: 'The API documentation for the new endpoints is missing several important parameters and examples. Can you please provide the complete specification so I can update the docs before the release next week?',
+                attachments: ['current_docs.pdf']
             }
-        }
+        ];
 
-        function assignPriority(ticket) {
-            // Smart priority assignment based on keywords and age
-            const urgentKeywords = ['urgent', 'emergency', 'critical', 'down', 'broken', 'error'];
-            const highKeywords = ['important', 'asap', 'soon', 'problem', 'issue'];
-            
-            const content = (ticket.subject + ' ' + ticket.content).toLowerCase();
-            const ticketAge = (new Date() - new Date(ticket.created_at)) / (1000 * 60 * 60); // hours
-            
-            if (urgentKeywords.some(word => content.includes(word)) || ticketAge > 24) {
-                return 'urgent';
-            } else if (highKeywords.some(word => content.includes(word)) || ticketAge > 8) {
-                return 'high';
-            } else if (ticketAge > 2) {
-                return 'normal';
-            } else {
-                return 'normal';
-            }
-        }
+        // Modal functionality
+        const modal = document.getElementById('ticketModal');
+        const closeModal = document.querySelector('.modal-close');
+        const ticketCards = document.querySelectorAll('.ticket-card');
 
-        function updateStats() {
-            const open = tickets.filter(t => t.status === 'open').length;
-            const closed = tickets.filter(t => t.status === 'closed').length;
-            const pending = tickets.filter(t => t.status === 'pending').length;
-            const total = tickets.length;
-
-            document.getElementById('open-count').textContent = open;
-            document.getElementById('closed-count').textContent = closed;
-            document.getElementById('pending-count').textContent = pending;
-            document.getElementById('total-count').textContent = total;
-            
-            // Filter counts
-            document.getElementById('filter-all-count').textContent = total;
-            document.getElementById('filter-open-count').textContent = open;
-            document.getElementById('filter-closed-count').textContent = closed;
-            document.getElementById('filter-pending-count').textContent = pending;
-
-            // Calculate average response time
-            const avgResponse = calculateAverageResponseTime();
-            document.getElementById('avg-response').textContent = avgResponse;
-        }
-
-        function calculateAverageResponseTime() {
-            if (tickets.length === 0) return '--';
-            
-            const responseTimes = tickets.map(ticket => {
-                const created = new Date(ticket.created_at);
-                const now = new Date();
-                const hours = (now - created) / (1000 * 60 * 60);
-                return Math.min(hours, 48); // Cap at 48 hours
-            });
-            
-            const avgHours = responseTimes.reduce((sum, time) => sum + time, 0) / responseTimes.length;
-            
-            if (avgHours < 1) return Math.round(avgHours * 60) + 'm';
-            if (avgHours < 24) return Math.round(avgHours) + 'h';
-            return Math.round(avgHours / 24) + 'd';
-        }
-
-        function updateCharts() {
-            updateTrendChart();
-            updateStatusChart();
-        }
-
-        function updateTrendChart() {
-            const ctx = document.getElementById('ticketTrendChart').getContext('2d');
-            
-            // Generate last 7 days data
-            const last7Days = [];
-            const ticketCounts = [];
-            
-            for (let i = 6; i >= 0; i--) {
-                const date = new Date();
-                date.setDate(date.getDate() - i);
-                last7Days.push(date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }));
+        ticketCards.forEach(card => {
+            card.addEventListener('click', () => {
+                const ticketId = card.getAttribute('data-id');
+                const ticket = tickets.find(t => t.id === ticketId);
                 
-                // Count tickets for this day
-                const dayTickets = tickets.filter(ticket => {
-                    const ticketDate = new Date(ticket.created_at);
-                    return ticketDate.toDateString() === date.toDateString();
-                }).length;
-                
-                ticketCounts.push(dayTickets);
-            }
-
-            if (ticketTrendChart) {
-                ticketTrendChart.destroy();
-            }
-
-            ticketTrendChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: last7Days,
-                    datasets: [{
-                        label: 'New Tickets',
-                        data: ticketCounts,
-                        borderColor: '#007aff',
-                        backgroundColor: 'rgba(0, 122, 255, 0.1)',
-                        borderWidth: 3,
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                stepSize: 1
-                            }
-                        }
+                if (ticket) {
+                    document.getElementById('modalSubject').textContent = ticket.subject;
+                    document.getElementById('modalId').textContent = `#TK-2023-${ticket.id}`;
+                    document.getElementById('modalPriority').innerHTML = `Priority: <span class="priority-badge priority-${ticket.priority}">${ticket.priority.charAt(0).toUpperCase() + ticket.priority.slice(1)}</span>`;
+                    document.getElementById('modalSender').textContent = `From: ${ticket.sender}`;
+                    document.getElementById('modalMessage').textContent = ticket.message;
+                    
+                    // Clear attachments
+                    const attachmentsList = document.getElementById('modalAttachments');
+                    attachmentsList.innerHTML = '';
+                    
+                    // Add attachments if they exist
+                    if (ticket.attachments && ticket.attachments.length > 0) {
+                        ticket.attachments.forEach(attachment => {
+                            const li = document.createElement('li');
+                            const a = document.createElement('a');
+                            a.href = '#';
+                            a.textContent = attachment;
+                            li.appendChild(a);
+                            attachmentsList.appendChild(li);
+                        });
+                    } else {
+                        const li = document.createElement('li');
+                        li.textContent = 'No attachments';
+                        attachmentsList.appendChild(li);
                     }
+                    
+                    modal.style.display = 'flex';
                 }
-            });
-        }
-
-        function updateStatusChart() {
-            const ctx = document.getElementById('statusChart').getContext('2d');
-            
-            const open = tickets.filter(t => t.status === 'open').length;
-            const closed = tickets.filter(t => t.status === 'closed').length;
-            const pending = tickets.filter(t => t.status === 'pending').length;
-
-            if (statusChart) {
-                statusChart.destroy();
-            }
-
-            statusChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Open', 'Closed', 'Pending'],
-                    datasets: [{
-                        data: [open, closed, pending],
-                        backgroundColor: [
-                            '#4ecdc4',
-                            '#45b7d1',
-                            '#f9ca24'
-                        ],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                padding: 20,
-                                usePointStyle: true
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        function updateInsights() {
-            const insights = generateSmartInsights();
-            document.getElementById('insight-text').innerHTML = insights;
-        }
-
-        function generateSmartInsights() {
-            if (tickets.length === 0) return 'No tickets available for analysis.';
-            
-            const urgentTickets = tickets.filter(t => t.priority === 'urgent' && t.status === 'open').length;
-            const oldestTicket = tickets.reduce((oldest, ticket) => {
-                const ticketAge = new Date() - new Date(ticket.created_at);
-                const oldestAge = new Date() - new Date(oldest.created_at);
-                return ticketAge > oldestAge ? ticket : oldest;
-            }, tickets[0]);
-            
-            const topCustomer = getTopCustomer();
-            
-            let insights = [];
-            
-            if (urgentTickets > 0) {
-                insights.push(`<strong>${urgentTickets} urgent ticket${urgentTickets > 1 ? 's' : ''} need${urgentTickets === 1 ? 's' : ''} immediate attention.</strong>`);
-            }
-            
-            const oldestAge = Math.floor((new Date() - new Date(oldestTicket.created_at)) / (1000 * 60 * 60));
-            if (oldestAge > 24) {
-                insights.push(`Your oldest open ticket is ${Math.floor(oldestAge / 24)} day${Math.floor(oldestAge / 24) > 1 ? 's' : ''} old.`);
-            }
-            
-            if (topCustomer) {
-                insights.push(`${topCustomer.email} has submitted ${topCustomer.count} ticket${topCustomer.count > 1 ? 's' : ''} recently.`);
-            }
-            
-            if (insights.length === 0) {
-                insights.push('All tickets are being handled efficiently! Great work maintaining quick response times.');
-            }
-            
-            return insights.join(' ');
-        }
-
-        function getTopCustomer() {
-            const customerCounts = {};
-            tickets.forEach(ticket => {
-                customerCounts[ticket.sender_email] = (customerCounts[ticket.sender_email] || 0) + 1;
-            });
-            
-            let topCustomer = null;
-            let maxCount = 1;
-            
-            Object.entries(customerCounts).forEach(([email, count]) => {
-                if (count > maxCount) {
-                    topCustomer = { email, count };
-                    maxCount = count;
-                }
-            });
-            
-            return topCustomer;
-        }
-
-        function performSearch() {
-            const query = document.getElementById('search-query').value.toLowerCase();
-            const dateFrom = document.getElementById('date-from').value;
-            const dateTo = document.getElementById('date-to').value;
-            
-            filteredTickets = tickets.filter(ticket => {
-                let matches = true;
-                
-                // Text search
-                if (query) {
-                    const searchText = `${ticket.subject} ${ticket.content} ${ticket.sender_email} ${ticket.sender_name}`.toLowerCase();
-                    matches = matches && searchText.includes(query);
-                }
-                
-                // Date range
-                if (dateFrom) {
-                    matches = matches && new Date(ticket.created_at) >= new Date(dateFrom);
-                }
-                
-                if (dateTo) {
-                    const endDate = new Date(dateTo);
-                    endDate.setHours(23, 59, 59, 999);
-                    matches = matches && new Date(ticket.created_at) <= endDate;
-                }
-                
-                return matches;
-            });
-            
-            displayTickets(filteredTickets);
-            
-            // Show search results info
-            if (query || dateFrom || dateTo) {
-                showSearchResults(filteredTickets.length);
-            }
-        }
-
-        function clearSearch() {
-            document.getElementById('search-query').value = '';
-            document.getElementById('date-from').value = '';
-            document.getElementById('date-to').value = '';
-            filteredTickets = [];
-            displayTickets();
-        }
-
-        function showSearchResults(count) {
-            const container = document.getElementById('tickets-container');
-            if (count === 0) {
-                container.innerHTML = `
-                    <div class="no-results">
-                        <h3>🔍 No Results Found</h3>
-                        <p>Try adjusting your search criteria or clearing the filters.</p>
-                        <button class="search-btn" onclick="clearSearch()" style="margin-top: 15px;">Clear Search</button>
-                    </div>
-                `;
-            }
-        }
-
-        function displayTickets(ticketsToShow = null) {
-            const container = document.getElementById('tickets-container');
-            let displayedTickets = ticketsToShow || tickets;
-            
-            // Apply current filter if no specific tickets provided
-            if (!ticketsToShow && currentFilter !== 'all') {
-                displayedTickets = tickets.filter(t => t.status === currentFilter);
-            }
-
-            if (displayedTickets.length === 0) {
-                const isSearch = ticketsToShow !== null;
-                container.innerHTML = `
-                    <div class="${isSearch ? 'no-results' : 'empty-state'}">
-                        <h3>${isSearch ? '🔍 No Results Found' : `No ${currentFilter === 'all' ? '' : currentFilter} tickets found`}</h3>
-                        <p>${isSearch ? 'Try adjusting your search criteria.' : 'Tickets will appear here when they are created.'}</p>
-                        ${isSearch ? '<button class="search-btn" onclick="clearSearch()" style="margin-top: 15px;">Clear Search</button>' : ''}
-                    </div>
-                `;
-                return;
-            }
-
-            const ticketsHtml = displayedTickets.map(ticket => `
-                <div class="ticket-card priority-${ticket.priority}" onclick="openTicket('${ticket.ticket_id}')">
-                    <div class="ticket-header">
-                        <div class="ticket-id">${ticket.ticket_id}</div>
-                        <div class="priority-badge priority-${ticket.priority}">${ticket.priority}</div>
-                    </div>
-                    <div class="ticket-subject">${escapeHtml(ticket.subject || 'No Subject')}</div>
-                    <div class="ticket-sender">From: ${escapeHtml(ticket.sender_name || ticket.sender_email)}</div>
-                    <div class="ticket-preview">${escapeHtml(ticket.content.substring(0, 150))}${ticket.content.length > 150 ? '...' : ''}</div>
-                    <div class="ticket-meta">
-                        <span class="status-badge status-${ticket.status}">${ticket.status}</span>
-                        <span class="ticket-time">${formatDate(ticket.created_at)}</span>
-                    </div>
-                </div>
-            `).join('');
-
-            container.innerHTML = ticketsHtml;
-        }
-
-        async function openTicket(ticketId) {
-            try {
-                const response = await fetch(`/api/tickets/${ticketId}`);
-                const ticket = await response.json();
-                
-                if (ticket.error) {
-                    alert('Error loading ticket');
-                    return;
-                }
-
-                showTicketModal(ticket);
-            } catch (error) {
-                console.error('Error loading ticket:', error);
-                alert('Error loading ticket details');
-            }
-        }
-
-        function showTicketModal(ticket) {
-            const modal = document.getElementById('ticket-modal');
-            const title = document.getElementById('modal-title');
-            const body = document.getElementById('modal-body');
-
-            title.textContent = `${ticket.ticket_id} - ${ticket.subject}`;
-
-            const conversationHtml = `
-                <div class="conversation">
-                    <div class="message incoming">
-                        <div class="message-header">
-                            <span class="message-sender">${escapeHtml(ticket.sender_name || ticket.sender_email)}</span>
-                            <span class="message-time">${formatDate(ticket.created_at)}</span>
-                        </div>
-                        <div class="message-content">${escapeHtml(ticket.content).replace(/\n/g, '<br>')}</div>
-                        ${ticket.attachments && ticket.attachments.length > 0 ? 
-                            `<div class="attachments">
-                                <strong>Attachments:</strong>
-                                ${ticket.attachments.map(att => `
-                                    <a href="/api/attachments/${att.id}" target="_blank">${escapeHtml(att.filename)}</a>
-                                `).join(', ')}
-                            </div>` : ''
-                        }
-                    </div>
-                    ${(ticket.responses || []).map(response => `
-                        <div class="message ${response.response_type === 'outgoing' ? 'outgoing' : 'incoming'}">
-                            <div class="message-header">
-                                <span class="message-sender">${escapeHtml(response.sender)}</span>
-                                <span class="message-time">${formatDate(response.created_at)}</span>
-                            </div>
-                            <div class="message-content">${escapeHtml(response.content).replace(/\n/g, '<br>')}</div>
-                        </div>
-                    `).join('')}
-                </div>
-
-                <div class="reply-form">
-                    <h3>Reply to Ticket</h3>
-                    <form onsubmit="sendReply(event, '${ticket.ticket_id}')">
-                        <div class="form-group">
-                            <textarea class="form-control" id="reply-content" placeholder="Type your response..." required></textarea>
-                        </div>
-                        <div class="form-group">
-                            <button type="submit" class="btn">Send Reply</button>
-                            <button type="button" class="btn btn-secondary" onclick="updateTicketStatus('${ticket.ticket_id}', 'closed')">Close Ticket</button>
-                            <button type="button" class="btn btn-secondary" onclick="updateTicketStatus('${ticket.ticket_id}', 'pending')">Mark Pending</button>
-                        </div>
-                    </form>
-                </div>
-            `;
-
-            body.innerHTML = conversationHtml;
-            modal.style.display = 'block';
-        }
-
-        async function sendReply(event, ticketId) {
-            event.preventDefault();
-            
-            const content = document.getElementById('reply-content').value;
-            if (!content.trim()) return;
-
-            try {
-                const response = await fetch(`/api/tickets/${ticketId}/reply`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ content })
-                });
-
-                const result = await response.json();
-                
-                if (result.success) {
-                    document.getElementById('reply-content').value = '';
-                    openTicket(ticketId);
-                    loadTickets();
-                } else {
-                    alert('Error sending reply');
-                }
-            } catch (error) {
-                console.error('Error sending reply:', error);
-                alert('Error sending reply');
-            }
-        }
-
-        async function updateTicketStatus(ticketId, status) {
-            try {
-                const response = await fetch(`/api/tickets/${ticketId}/status`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ status })
-                });
-
-                const result = await response.json();
-                
-                if (result.success) {
-                    closeModal();
-                    loadTickets();
-                } else {
-                    alert('Error updating ticket status');
-                }
-            } catch (error) {
-                console.error('Error updating status:', error);
-                alert('Error updating ticket status');
-            }
-        }
-
-        function closeModal() {
-            document.getElementById('ticket-modal').style.display = 'none';
-        }
-
-        // Filter event listeners
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                currentFilter = this.dataset.status;
-                displayTickets();
             });
         });
 
-        // Close modal when clicking outside
-        window.addEventListener('click', function(event) {
-            const modal = document.getElementById('ticket-modal');
+        closeModal.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+
+        window.addEventListener('click', (event) => {
             if (event.target === modal) {
-                closeModal();
+                modal.style.display = 'none';
             }
         });
 
-        // Search on Enter key
-        document.getElementById('search-query').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                performSearch();
-            }
-        });
-
-        // Utility functions
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        function formatDate(dateString) {
-            const date = new Date(dateString);
-            const now = new Date();
-            const diffTime = Math.abs(now - date);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-            if (diffDays === 1) return 'Yesterday';
-            if (diffDays < 7) return `${diffDays} days ago`;
+        // Search functionality
+        const searchInput = document.querySelector('.search-input');
+        searchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const ticketCards = document.querySelectorAll('.ticket-card');
             
-            return date.toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
+            ticketCards.forEach(card => {
+                const ticketId = card.getAttribute('data-id');
+                const ticket = tickets.find(t => t.id === ticketId);
+                const cardText = card.textContent.toLowerCase();
+                
+                if (cardText.includes(searchTerm) || (ticket && ticket.subject.toLowerCase().includes(searchTerm))) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
             });
-        }
+        });
+
+        // Filter functionality
+        const filterSelects = document.querySelectorAll('.filter-select');
+        filterSelects.forEach(select => {
+            select.addEventListener('change', () => {
+                // This would be implemented based on your specific filtering needs
+                console.log('Filter changed:', select.value);
+            });
+        });
     </script>
 </body>
 </html>
