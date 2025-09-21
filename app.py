@@ -34,6 +34,7 @@ SMTP_PORT = int(os.getenv('SMTP_PORT', 587))
 EMAIL_USER = os.getenv('EMAIL_USER', 'your-email@gmail.com')
 EMAIL_PASS = os.getenv('EMAIL_PASS', 'your-app-password')
 EMAIL_CHECK_INTERVAL = int(os.getenv('EMAIL_CHECK_INTERVAL', 30))
+EMAIL_SEARCH_CRITERIA = os.getenv('EMAIL_SEARCH_CRITERIA', 'UNSEEN')
 ADMIN_TOKEN = os.getenv('ADMIN_TOKEN', '')
 UPLOAD_FOLDER = 'attachments'
 
@@ -326,7 +327,9 @@ class EmailProcessor:
         
         try:
             mail.select('inbox')
-            status, messages = mail.search(None, 'UNSEEN')
+            # Use configurable search criteria (default UNSEEN). Can be set to 'ALL' for debugging.
+            criteria = EMAIL_SEARCH_CRITERIA or 'UNSEEN'
+            status, messages = mail.search(None, criteria)
 
             if status == 'OK':
                 # messages[0] may be an empty byte string when there are no results
@@ -484,14 +487,15 @@ def admin_imap_status():
     token = request.headers.get('X-Admin-Token') or request.args.get('token')
     if not ADMIN_TOKEN or token != ADMIN_TOKEN:
         return jsonify({'error': 'unauthorized'}), 401
-
     try:
         mail = email_processor.connect_imap()
         if not mail:
             return jsonify({'error': 'imap_connection_failed'}), 500
 
         mail.select('inbox')
-        status, messages = mail.search(None, 'UNSEEN')
+        criteria = EMAIL_SEARCH_CRITERIA or 'UNSEEN'
+        status, messages = mail.search(None, criteria)
+
         unseen_count = 0
         subjects = []
         if status == 'OK' and messages and messages[0]:
