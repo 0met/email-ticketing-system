@@ -1,399 +1,230 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ticket Support System</title>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mail Ticketing System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+      :root{--bg:#fafafa;--card:#ffffff;--muted:#6b7280;--accent:#1e3a8a;--accent-2:#2563eb;--radius:10px}
+      *{box-sizing:border-box}
+      body{font-family:Inter,system-ui,Segoe UI,Roboto,-apple-system,Arial;background:var(--bg);margin:0;color:#0f172a}
+      .app{max-width:1100px;margin:28px auto;padding:18px}
+      .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+      .brand{display:flex;gap:12px;align-items:center}
+      .logo{width:44px;height:44px;background:linear-gradient(135deg,#eef2ff,#ffffff);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--accent);font-weight:700;border:1px solid rgba(30,58,138,0.06)}
+      h1{font-size:18px;margin:0}
+      .tabs{display:flex;gap:8px;background:transparent}
+      .tab{padding:8px 12px;border-radius:10px;background:transparent;color:var(--muted);cursor:pointer;border:1px solid transparent;font-weight:600}
+      .tab.active{background:var(--card);border-color:rgba(15,23,42,0.04);color:var(--accent);box-shadow:0 6px 18px rgba(15,23,42,0.04)}
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            <!doctype html>
-            <html lang="en">
-                <head>
-                    <meta charset="utf-8" />
-                    <meta name="viewport" content="width=device-width, initial-scale=1" />
-                    <title>Mail Ticketing System</title>
-                    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-                    <style>
-                        :root{--bg:#f6f8fb;--card:#ffffff;--muted:#6b7280;--accent:#2563eb;--radius:12px}
-                        *{box-sizing:border-box}
-                        body{font-family:Inter,system-ui,Segoe UI,Roboto,-apple-system,Arial;background:var(--bg);margin:0;color:#0f172a}
-                        .app{max-width:1200px;margin:32px auto;padding:20px}
-                        .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
-                        .brand{display:flex;gap:12px;align-items:center}
-                        .logo{width:44px;height:44px;background:linear-gradient(135deg,#7c3aed,#06b6d4);border-radius:10px;box-shadow:0 6px 18px rgba(16,24,40,0.08)}
-                        h1{font-size:20px;margin:0}
-                        .tabs{display:flex;gap:8px;background:transparent}
-                        .tab{padding:10px 14px;border-radius:10px;background:transparent;color:var(--muted);cursor:pointer;border:1px solid transparent}
-                        .tab.active{background:var(--card);border-color:rgba(15,23,42,0.06);color:var(--accent);box-shadow:0 6px 18px rgba(16,24,40,0.04)}
+      .panel{background:transparent;padding:0}
+      .grid{display:grid;grid-template-columns:1fr 320px;gap:20px}
 
-                        .panel{background:var(--card);padding:20px;border-radius:var(--radius);box-shadow:0 6px 24px rgba(15,23,42,0.04)}
-                        .grid{display:grid;grid-template-columns:1fr 360px;gap:20px}
+      /* Tickets list */
+      .tickets{display:grid;gap:12px}
+      .ticket{padding:14px;border-radius:10px;background:var(--card);border:1px solid rgba(15,23,42,0.04);box-shadow:0 6px 16px rgba(15,23,42,0.03)}
+      .ticket h3{margin:0;font-size:15px}
+      .meta{display:flex;justify-content:space-between;color:var(--muted);font-size:13px;margin-top:6px}
 
-                        /* Tickets list */
-                        .tickets{display:grid;gap:12px}
-                        .ticket{padding:14px;border-radius:10px;background:linear-gradient(180deg, #ffffff, #fbfdff);border:1px solid rgba(15,23,42,0.04)}
-                        .ticket h3{margin:0;font-size:15px}
-                        .meta{display:flex;justify-content:space-between;color:var(--muted);font-size:13px;margin-top:6px}
+      /* Analytics */
+      .stats{display:flex;gap:12px;margin-bottom:14px}
+      .stat{flex:1;padding:12px;border-radius:10px;background:var(--card);border:1px solid rgba(15,23,42,0.04);box-shadow:0 6px 16px rgba(15,23,42,0.03)}
+      .stat .num{font-size:20px;font-weight:700}
 
-                        /* Analytics */
-                        .stats{display:flex;gap:12px;margin-bottom:14px}
-                        .stat{flex:1;padding:12px;border-radius:10px;background:linear-gradient(180deg,#fff,#fbfdff);border:1px solid rgba(15,23,42,0.04)}
-                        .stat .num{font-size:20px;font-weight:700}
+      /* Settings */
+      .form-row{display:flex;gap:8px;align-items:center}
+      input[type=text],input[type=password]{flex:1;padding:10px;border-radius:8px;border:1px solid #e6eef8;background:#fbfdff}
+      button.btn{background:var(--accent-2);color:white;padding:10px 12px;border:none;border-radius:8px;cursor:pointer}
+      pre{background:#f3f4f6;color:#0f172a;padding:12px;border-radius:8px;overflow:auto}
 
-                        /* Settings */
-                        .form-row{display:flex;gap:8px;align-items:center}
-                        input[type=text],input[type=password]{flex:1;padding:10px;border-radius:8px;border:1px solid #e6eef8}
-                        button.btn{background:var(--accent);color:white;padding:10px 12px;border:none;border-radius:8px;cursor:pointer}
-                        pre{background:#0b1220;color:#e6eef8;padding:12px;border-radius:8px;overflow:auto}
+      aside{display:flex;flex-direction:column;gap:12px}
+      aside .card{background:var(--card);padding:12px;border-radius:10px;border:1px solid rgba(15,23,42,0.04);box-shadow:0 6px 16px rgba(15,23,42,0.03)}
 
-                        @media(max-width:900px){.grid{grid-template-columns:1fr}.brand h1{font-size:16px}}
-                    </style>
-                </head>
-                <body>
-                    <div class="app">
-                        <div class="top">
-                            <div class="brand">
-                                <div class="logo"></div>
-                                <div>
-                                    <h1>Mail Ticketing System</h1>
-                                    <div style="color:var(--muted);font-size:13px">Inbox: <strong>emailticket4@gmail.com</strong></div>
-                                </div>
-                            </div>
+      .controls{display:flex;gap:8px}
+      .muted{color:var(--muted)}
 
-                            <div class="tabs" role="tablist">
-                                <div class="tab active" data-tab="tickets">Tickets</div>
-                                <div class="tab" data-tab="analytics">Analytics</div>
-                                <div class="tab" data-tab="settings">Settings</div>
-                            </div>
-                        </div>
-
-                        <div class="panel grid">
-                            <div id="panelContent">
-                                <!-- Tickets Panel -->
-                                <div id="tickets" class="tickets-panel">
-                                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-                                        <h2 style="margin:0">Tickets</h2>
-                                        <div style="display:flex;gap:8px">
-                                            <button class="btn" onclick="refreshTickets()">Refresh</button>
-                                            <button class="btn" style="background:#10b981" onclick="triggerCheck()">Run Check</button>
-                                        </div>
-                                    </div>
-
-                                    <div id="ticketsList" class="tickets"></div>
-                                </div>
-
-                                <!-- Analytics Panel (hidden initially) -->
-                                <div id="analytics" style="display:none">
-                                    <h2 style="margin-top:0">Analytics</h2>
-                                    <div class="stats">
-                                        <div class="stat"><div class="num" id="totalCount">0</div><div style="color:var(--muted)">Total tickets</div></div>
-                                        <div class="stat"><div class="num" id="openCount">0</div><div style="color:var(--muted)">Open</div></div>
-                                        <div class="stat"><div class="num" id="closedCount">0</div><div style="color:var(--muted)">Closed</div></div>
-                                    </div>
-                                    <canvas id="statusChart" width="400" height="200"></canvas>
-                                </div>
-
-                                <!-- Settings Panel (hidden initially) -->
-                                <div id="settings" style="display:none">
-                                    <h2 style="margin-top:0">Settings</h2>
-                                    <div style="margin-bottom:12px;color:var(--muted)">Admin token is required to use admin actions. Paste it below (not stored).</div>
-                                    <div class="form-row" style="margin-bottom:12px">
-                                        <input id="adminToken" type="password" placeholder="Admin token" />
-                                        <button class="btn" onclick="saveToken()">Save</button>
-                                    </div>
-
-                                    <div style="display:flex;gap:8px;margin-bottom:12px">
-                                        <button class="btn" onclick="imapStatus()">IMAP Status</button>
-                                        <button class="btn" style="background:#10b981" onclick="triggerCheck()">Run Check</button>
-                                    </div>
-
-                                    <div>
-                                        <h3>Last admin response</h3>
-                                        <pre id="adminOutput">(none)</pre>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <aside>
-                                <div style="margin-bottom:12px;">
-                                    <div style="font-size:13px;color:var(--muted)">Quick Actions</div>
-                                    <div style="display:flex;gap:8px;margin-top:8px">
-                                        <button class="btn" onclick="refreshTickets()">Refresh</button>
-                                        <button class="btn" style="background:#ef4444" onclick="location.reload()">Reload</button>
-                                    </div>
-                                </div>
-                                <div style="margin-top:20px;color:var(--muted);font-size:13px">Help</div>
-                                <div style="margin-top:8px;color:var(--muted);font-size:13px">Use Settings to provide the admin token for IMAP checks and manual triggers.</div>
-                            </aside>
-                        </div>
-                    </div>
-
-                    <!-- Chart.js -->
-                    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-                    <script>
-                        let tickets = [];
-                        let chart = null;
-
-                        document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
-                            document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
-                            t.classList.add('active');
-                            const tab = t.dataset.tab;
-                            document.getElementById('tickets').style.display = tab === 'tickets' ? '' : 'none';
-                            document.getElementById('analytics').style.display = tab === 'analytics' ? '' : 'none';
-                            document.getElementById('settings').style.display = tab === 'settings' ? '' : 'none';
-                            if(tab === 'analytics') renderAnalytics();
-                        }));
-
-                        function saveToken(){
-                            const v = document.getElementById('adminToken').value.trim();
-                            if(!v) return alert('Enter token');
-                            sessionStorage.setItem('adminToken', v);
-                            alert('Token saved for this session');
-                        }
-
-                        async function fetchTickets(){
-                            try{
-                                const res = await fetch('/api/tickets');
-                                tickets = await res.json();
-                                renderTickets();
-                            }catch(e){
-                                console.error(e); document.getElementById('ticketsList').innerText = 'Failed to load tickets';
-                            }
-                        }
-
-                        function renderTickets(){
-                            const wrap = document.getElementById('ticketsList');
-                            wrap.innerHTML = '';
-                            if(!tickets || tickets.length === 0){ wrap.innerHTML = '<div style="color:var(--muted)">No tickets yet</div>'; return }
-                            tickets.forEach(t=>{
-                                const el = document.createElement('div'); el.className='ticket';
-                                el.innerHTML = `<h3>${escapeHtml(t.subject||'No subject')}</h3><div class="meta"><div>${escapeHtml(t.sender_email||'')}</div><div>${new Date(t.updated_at).toLocaleString()}</div></div><div style="margin-top:8px;color:var(--muted)">${escapeHtml((t.content||'').slice(0,200))}</div>`;
-                                wrap.appendChild(el);
-                            });
-                        }
-
-                        function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[c]) }
-
-                        async function renderAnalytics(){
-                            const counts = { total: tickets.length, open:0, closed:0, pending:0 };
-                            tickets.forEach(t=>{ const s=(t.status||'open').toLowerCase(); counts[s]= (counts[s]||0)+1 });
-                            document.getElementById('totalCount').innerText = counts.total;
-                            document.getElementById('openCount').innerText = counts.open;
-                            document.getElementById('closedCount').innerText = counts.closed;
-
-                            const ctx = document.getElementById('statusChart').getContext('2d');
-                            if(chart) chart.destroy();
-                            chart = new Chart(ctx, {
-                                type: 'pie',
-                                data: {labels:['open','pending','closed'],datasets:[{data:[counts.open,counts.pending,counts.closed],backgroundColor:['#60a5fa','#fbbf24','#34d399']}]},
-                                options:{plugins:{legend:{position:'bottom'}}}
-                            });
-                        }
-
-                        async function triggerCheck(){
-                            const token = sessionStorage.getItem('adminToken');
-                            if(!token) return alert('Set admin token in Settings first');
-                            try{
-                                const r = await fetch('/api/admin/check-emails',{method:'POST',headers:{'X-Admin-Token':token}});
-                                const j = await r.json(); document.getElementById('adminOutput').innerText = JSON.stringify(j,null,2);
-                                setTimeout(fetchTickets,2000);
-                            }catch(e){ console.error(e); alert('Failed to trigger check') }
-                        }
-
-                        async function imapStatus(){
-                            const token = sessionStorage.getItem('adminToken');
-                            if(!token) return alert('Set admin token in Settings first');
-                            try{
-                                const r = await fetch('/api/admin/imap-status',{headers:{'X-Admin-Token':token}});
-                                const j = await r.json(); document.getElementById('adminOutput').innerText = JSON.stringify(j,null,2);
-                            }catch(e){ console.error(e); alert('IMAP status failed') }
-                        }
-
-                        // initial
-                        fetchTickets();
-                    </script>
-                </body>
-            </html>
-        <div class="filters">
-            <button class="filter-btn active" data-status="all">All Tickets</button>
-            <button class="filter-btn" data-status="open">Open</button>
-            <button class="filter-btn" data-status="closed">Closed</button>
-            <button class="filter-btn" data-status="pending">Pending</button>
+      @media(max-width:900px){.grid{grid-template-columns:1fr}.brand h1{font-size:16px}}
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <div class="top">
+        <div class="brand">
+          <div class="logo">MT</div>
+          <div>
+            <h1>Mail Ticketing System</h1>
+            <div class="muted" style="font-size:13px">Inbox: <strong>emailticket4@gmail.com</strong></div>
+          </div>
         </div>
 
-        <div class="tickets-grid" id="tickets-container">
-            <div class="loading">
-                <div class="spinner"></div>
-                Loading tickets...
+        <div class="tabs" role="tablist">
+          <div class="tab active" data-tab="tickets">Tickets</div>
+          <div class="tab" data-tab="analytics">Analytics</div>
+          <div class="tab" data-tab="settings">Settings</div>
+        </div>
+      </div>
+
+      <div class="panel grid">
+        <div id="panelContent">
+          <!-- Tickets Panel -->
+          <div id="tickets" class="tickets-panel">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <h2 style="margin:0">Tickets</h2>
+              <div class="controls">
+                <button class="btn" onclick="refreshTickets()">Refresh</button>
+                <button class="btn" style="background:#10b981" onclick="triggerCheck()">Run Check</button>
+              </div>
             </div>
+
+            <div id="ticketsList" class="tickets"></div>
+          </div>
+
+          <!-- Analytics Panel (hidden initially) -->
+          <div id="analytics" style="display:none">
+            <h2 style="margin-top:0">Analytics</h2>
+            <div class="stats">
+              <div class="stat"><div class="num" id="totalCount">0</div><div class="muted">Total tickets</div></div>
+              <div class="stat"><div class="num" id="openCount">0</div><div class="muted">Open</div></div>
+              <div class="stat"><div class="num" id="closedCount">0</div><div class="muted">Closed</div></div>
+            </div>
+            <canvas id="statusChart" width="400" height="200"></canvas>
+          </div>
+
+          <!-- Settings Panel (hidden initially) -->
+          <div id="settings" style="display:none">
+            <h2 style="margin-top:0">Settings</h2>
+            <div style="margin-bottom:12px" class="muted">Admin token is required to use admin actions. Paste it below (not stored).</div>
+            <div class="form-row" style="margin-bottom:12px">
+              <input id="adminToken" type="password" placeholder="Admin token" />
+              <button class="btn" onclick="saveToken()">Save</button>
+            </div>
+
+            <div style="display:flex;gap:8px;margin-bottom:12px">
+              <button class="btn" onclick="imapStatus()">IMAP Status</button>
+              <button class="btn" style="background:#10b981" onclick="triggerCheck()">Run Check</button>
+            </div>
+
+            <div>
+              <h3>Last admin response</h3>
+              <pre id="adminOutput">(none)</pre>
+            </div>
+          </div>
         </div>
+
+        <aside>
+          <div class="card">
+            <div style="font-size:13px;color:var(--muted)">Quick Actions</div>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <button class="btn" onclick="refreshTickets()">Refresh</button>
+              <button class="btn" style="background:#ef4444" onclick="location.reload()">Reload</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div style="font-size:13px;color:var(--muted)">Help</div>
+            <div style="margin-top:8px;color:var(--muted);font-size:13px">Use Settings to provide the admin token for IMAP checks and manual triggers.</div>
+          </div>
+        </aside>
+      </div>
     </div>
 
-    <!-- Ticket Modal -->
-    <div class="modal" id="ticket-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="modal-title">Ticket Details</h2>
-                <button class="close-btn" onclick="closeModal()">&times;</button>
-            </div>
-            <div class="modal-body" id="modal-body">
-                <!-- Ticket details will be loaded here -->
-            </div>
-        </div>
-    </div>
-
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        let currentFilter = 'all';
-        let tickets = [];
+      // Single JS scope. Variables used by all panels.
+      let ticketsData = [];
+      let chart = null;
 
-        // Load tickets on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            loadTickets();
-            setInterval(loadTickets, 30000); // Refresh every 30 seconds
+      document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+        t.classList.add('active');
+        const tab = t.dataset.tab;
+        document.getElementById('tickets').style.display = tab === 'tickets' ? '' : 'none';
+        document.getElementById('analytics').style.display = tab === 'analytics' ? '' : 'none';
+        document.getElementById('settings').style.display = tab === 'settings' ? '' : 'none';
+        if(tab === 'analytics') renderAnalytics();
+      }));
+
+      function saveToken(){
+        const v = document.getElementById('adminToken').value.trim();
+        if(!v) return alert('Enter token');
+        sessionStorage.setItem('adminToken', v);
+        alert('Token saved for this session');
+      }
+
+      async function refreshTickets(){
+        await fetchTickets();
+      }
+
+      async function fetchTickets(){
+        try{
+          const res = await fetch('/api/tickets');
+          ticketsData = await res.json();
+          renderTickets();
+        }catch(e){
+          console.error(e); document.getElementById('ticketsList').innerText = 'Failed to load tickets';
+        }
+      }
+
+      function renderTickets(){
+        const wrap = document.getElementById('ticketsList');
+        wrap.innerHTML = '';
+        if(!ticketsData || ticketsData.length === 0){ wrap.innerHTML = '<div style="color:var(--muted)">No tickets yet</div>'; return }
+        ticketsData.forEach(t=>{
+          const el = document.createElement('div'); el.className='ticket';
+          el.innerHTML = `<h3>${escapeHtml(t.subject||'No subject')}</h3><div class="meta"><div>${escapeHtml(t.sender_email||'')}</div><div>${new Date(t.updated_at).toLocaleString()}</div></div><div style="margin-top:8px;color:var(--muted)">${escapeHtml((t.content||'').slice(0,200))}</div>`;
+          wrap.appendChild(el);
         });
+      }
 
-        async function loadTickets() {
-            try {
-                const response = await fetch('/api/tickets');
-                tickets = await response.json();
-                
-                updateStats();
-                displayTickets();
-            } catch (error) {
-                console.error('Error loading tickets:', error);
-                document.getElementById('tickets-container').innerHTML = 
-                    '<div class="empty-state"><h3>Error Loading Tickets</h3><p>Please try refreshing the page.</p></div>';
-            }
-        }
+      function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[c]) }
 
-        function updateStats() {
-            const open = tickets.filter(t => t.status === 'open').length;
-            const closed = tickets.filter(t => t.status === 'closed').length;
-            const pending = tickets.filter(t => t.status === 'pending').length;
-            const total = tickets.length;
+      async function renderAnalytics(){
+        const counts = { total: ticketsData.length, open:0, closed:0, pending:0 };
+        ticketsData.forEach(t=>{ const s=(t.status||'open').toLowerCase(); counts[s]= (counts[s]||0)+1 });
+        document.getElementById('totalCount').innerText = counts.total;
+        document.getElementById('openCount').innerText = counts.open;
+        document.getElementById('closedCount').innerText = counts.closed;
 
-            document.getElementById('open-count').textContent = open;
-            document.getElementById('closed-count').textContent = closed;
-            document.getElementById('pending-count').textContent = pending;
-            document.getElementById('total-count').textContent = total;
-        }
+        const ctx = document.getElementById('statusChart').getContext('2d');
+        if(chart) chart.destroy();
+        chart = new Chart(ctx, {
+          type: 'pie',
+          data: {labels:['open','pending','closed'],datasets:[{data:[counts.open,counts.pending,counts.closed],backgroundColor:['#60a5fa','#fbbf24','#34d399']}]},
+          options:{plugins:{legend:{position:'bottom'}}}
+        });
+      }
 
-        function displayTickets() {
-            const container = document.getElementById('tickets-container');
-            const filteredTickets = currentFilter === 'all' ? 
-                tickets : tickets.filter(t => t.status === currentFilter);
+      async function triggerCheck(){
+        const token = sessionStorage.getItem('adminToken');
+        if(!token) return alert('Set admin token in Settings first');
+        try{
+          const r = await fetch('/api/admin/check-emails',{method:'POST',headers:{'X-Admin-Token':token}});
+          const j = await r.json(); document.getElementById('adminOutput').innerText = JSON.stringify(j,null,2);
+          setTimeout(fetchTickets,2000);
+        }catch(e){ console.error(e); alert('Failed to trigger check') }
+      }
 
-            if (filteredTickets.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <h3>No ${currentFilter === 'all' ? '' : currentFilter} tickets found</h3>
-                        <p>Tickets will appear here when they are created.</p>
-                    </div>
-                `;
-                return;
-            }
+      async function imapStatus(){
+        const token = sessionStorage.getItem('adminToken');
+        if(!token) return alert('Set admin token in Settings first');
+        try{
+          const r = await fetch('/api/admin/imap-status',{headers:{'X-Admin-Token':token}});
+          const j = await r.json(); document.getElementById('adminOutput').innerText = JSON.stringify(j,null,2);
+        }catch(e){ console.error(e); alert('IMAP status failed') }
+      }
 
-            const ticketsHtml = filteredTickets.map(ticket => `
-                <div class="ticket-card" onclick="openTicket('${ticket.ticket_id}')">
-                    <div class="ticket-id">${ticket.ticket_id}</div>
-                    <div class="ticket-subject">${escapeHtml(ticket.subject || 'No Subject')}</div>
-                    <div class="ticket-sender">From: ${escapeHtml(ticket.sender_name || ticket.sender_email)}</div>
-                    <div class="ticket-preview">${escapeHtml(ticket.content.substring(0, 150))}${ticket.content.length > 150 ? '...' : ''}</div>
-                    <div class="ticket-meta">
-                        <span class="status-badge status-${ticket.status}">${ticket.status}</span>
-                        <span class="ticket-time">${formatDate(ticket.created_at)}</span>
-                    </div>
-                </div>
-            `).join('');
+      // initial
+      fetchTickets();
+    </script>
 
-            container.innerHTML = ticketsHtml;
-        }
-
-        async function openTicket(ticketId) {
-            try {
-                const response = await fetch(`/api/tickets/${ticketId}`);
-                const ticket = await response.json();
-                
-                if (ticket.error) {
-                    alert('Error loading ticket');
-                    return;
-                }
-
-                showTicketModal(ticket);
-            } catch (error) {
-                console.error('Error loading ticket:', error);
-                alert('Error loading ticket details');
-            }
-        }
-
-        function showTicketModal(ticket) {
-            const modal = document.getElementById('ticket-modal');
-            const title = document.getElementById('modal-title');
-            const body = document.getElementById('modal-body');
-
-            title.textContent = `${ticket.ticket_id} - ${ticket.subject}`;
-
-            const conversationHtml = `
-                <div class="conversation">
-                    <div class="message incoming">
-                        <div class="message-header">
-                            <span class="message-sender">${escapeHtml(ticket.sender_name || ticket.sender_email)}</span>
-                            <span class="message-time">${formatDate(ticket.created_at)}</span>
-                        </div>
-                        <div class="message-content">${escapeHtml(ticket.content).replace(/\n/g, '<br>')}</div>
-                        ${ticket.attachments && ticket.attachments.length > 0 ? 
-                            `<div class="attachments">
-                                <strong>Attachments:</strong>
-                                ${ticket.attachments.map(att => `
-                                    <a href="/api/attachments/${att.id}" target="_blank">${escapeHtml(att.filename)}</a>
-                                `).join(', ')}
-                            </div>` : ''
-                        }
-                    </div>
-                    ${(ticket.responses || []).map(response => `
-                        <div class="message ${response.response_type === 'outgoing' ? 'outgoing' : 'incoming'}">
-                            <div class="message-header">
-                                <span class="message-sender">${escapeHtml(response.sender)}</span>
-                                <span class="message-time">${formatDate(response.created_at)}</span>
-                            </div>
-                            <div class="message-content">${escapeHtml(response.content).replace(/\n/g, '<br>')}</div>
-                        </div>
-                    `).join('')}
-                </div>
-
-                <div class="reply-form">
-                    <h3>Reply to Ticket</h3>
-                    <form onsubmit="sendReply(event, '${ticket.ticket_id}')">
-                        <div class="form-group">
-                            <textarea class="form-control" id="reply-content" placeholder="Type your response..." required></textarea>
-                        </div>
-                        <div class="form-group">
-                            <button type="submit" class="btn">Send Reply</button>
-                            <button type="button" class="btn btn-secondary" onclick="updateTicketStatus('${ticket.ticket_id}', 'closed')">Close Ticket</button>
-                            <button type="button" class="btn btn-secondary" onclick="updateTicketStatus('${ticket.ticket_id}', 'pending')">Mark Pending</button>
-                        </div>
-                    </form>
-                </div>
-            `;
-
-            body.innerHTML = conversationHtml;
-            modal.style.display = 'block';
-        }
-
-        async function sendReply(event, ticketId) {
-            event.preventDefault();
-            
-            const content = document.getElementById('reply-content').value;
-            if (!content.trim()) return;
+    <!-- Ticket Modal (kept minimal) -->
+    <div id="ticket-modal" style="display:none;">
+      <!-- can add ticket detail modal here later -->
+    </div>
+  </body>
+</html>
 
             try {
                 const response = await fetch(`/api/tickets/${ticketId}/reply`, {
