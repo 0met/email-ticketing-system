@@ -232,8 +232,8 @@ ticketing = TicketingSystem()
 
 class EmailProcessor:
     def __init__(self):
-    # persistent deduplication is handled via ticketing database
-    self.processed_emails = None
+        # persistent deduplication is handled via ticketing database
+        self.processed_emails = None
     
     def connect_imap(self):
         """Connect to IMAP server"""
