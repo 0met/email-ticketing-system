@@ -526,6 +526,23 @@ def admin_imap_status():
         logging.exception('IMAP status check failed: %s', e)
         return jsonify({'error': str(e)}), 500
 
+
+@app.route('/api/admin/health')
+def admin_health():
+    """Return a simple health report and masked email config (no secrets)."""
+    masked_pass = None
+    if EMAIL_PASS:
+        masked_pass = EMAIL_PASS[:2] + '...' + EMAIL_PASS[-2:]
+
+    return jsonify({
+        'status': 'ok',
+        'email_host': EMAIL_HOST,
+        'email_port': EMAIL_PORT,
+        'email_user': EMAIL_USER,
+        'email_pass_masked': masked_pass,
+        'email_search_criteria': EMAIL_SEARCH_CRITERIA
+    })
+
 def email_checker():
     """Background email checker"""
     while True:
@@ -536,10 +553,6 @@ def email_checker():
             logging.exception('Email checker error: %s', e)
             time.sleep(60)  # Wait longer if there's an error
 
-# Start email checker in background
-if __name__ == '__main__':
-    # Start email checker thread
-    email_thread = Thread(target=email_checker, daemon=True)
-    email_thread.start()
-    
-    app.run(debug=True, host='0.0.0.0', port=5000)
+# Note: email polling is intended to be run from the separate worker process
+# (see `email_worker.py` and Procfile). To run locally for development you can
+# start the web app with `python app.py` and the worker with `python email_worker.py`.
