@@ -545,6 +545,7 @@ def admin_health():
 
 def email_checker():
     """Background email checker"""
+    logging.info('email_checker started')
     while True:
         try:
             email_processor.check_emails()
