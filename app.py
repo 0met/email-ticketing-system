@@ -94,9 +94,35 @@ class TicketingSystem:
                 FOREIGN KEY (response_id) REFERENCES responses (id)
             )
         ''')
+
+        # Create processed messages table to persist message hashes and avoid reprocessing
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS processed_messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                msg_hash TEXT UNIQUE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
         
         conn.commit()
         conn.close()
+
+    def is_message_processed(self, msg_hash):
+        conn = sqlite3.connect('tickets.db')
+        cursor = conn.cursor()
+        cursor.execute('SELECT 1 FROM processed_messages WHERE msg_hash = ?', (msg_hash,))
+        exists = cursor.fetchone() is not None
+        conn.close()
+        return exists
+
+    def mark_message_processed(self, msg_hash):
+        conn = sqlite3.connect('tickets.db')
+        cursor = conn.cursor()
+        try:
+            cursor.execute('INSERT OR IGNORE INTO processed_messages (msg_hash) VALUES (?)', (msg_hash,))
+            conn.commit()
+        finally:
+            conn.close()
     
     def generate_ticket_id(self, email_content):
         """Generate unique ticket ID"""
@@ -206,7 +232,8 @@ ticketing = TicketingSystem()
 
 class EmailProcessor:
     def __init__(self):
-        self.processed_emails = set()
+    # persistent deduplication is handled via ticketing database
+    self.processed_emails = None
     
     def connect_imap(self):
         """Connect to IMAP server"""
@@ -316,9 +343,9 @@ class EmailProcessor:
 
                             # Check if we've already processed this email
                             email_hash = hashlib.md5(email_body).hexdigest()
-                            if email_hash not in self.processed_emails:
+                            if not ticketing.is_message_processed(email_hash):
                                 self.process_email(email_message)
-                                self.processed_emails.add(email_hash)
+                                ticketing.mark_message_processed(email_hash)
                                 try:
                                     # Mark message as Seen to avoid reprocessing
                                     mail.store(email_id, '+FLAGS', '\\Seen')
@@ -444,6 +471,55 @@ def admin_check_emails():
         return jsonify({'success': True})
     except Exception as e:
         logging.exception('Manual email check failed: %s', e)
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/admin/imap-status', methods=['GET'])
+def admin_imap_status():
+    """Diagnostic endpoint to check IMAP login and unseen message count.
+
+    Returns short list of unseen message subjects (decoded) for quick verification.
+    Requires ADMIN_TOKEN.
+    """
+    token = request.headers.get('X-Admin-Token') or request.args.get('token')
+    if not ADMIN_TOKEN or token != ADMIN_TOKEN:
+        return jsonify({'error': 'unauthorized'}), 401
+
+    try:
+        mail = email_processor.connect_imap()
+        if not mail:
+            return jsonify({'error': 'imap_connection_failed'}), 500
+
+        mail.select('inbox')
+        status, messages = mail.search(None, 'UNSEEN')
+        unseen_count = 0
+        subjects = []
+        if status == 'OK' and messages and messages[0]:
+            email_ids = messages[0].split()
+            unseen_count = len(email_ids)
+            # fetch up to last 5 unseen subjects for quick sanity
+            for email_id in email_ids[-5:]:
+                st, msg_data = mail.fetch(email_id, '(RFC822)')
+                if st == 'OK' and msg_data and msg_data[0]:
+                    raw = msg_data[0][1]
+                    msg = email.message_from_bytes(raw)
+                    subj_raw = msg.get('subject', '')
+                    try:
+                        decoded_parts = decode_header(subj_raw)
+                        subj = ''.join([
+                            part.decode(enc or 'utf-8') if isinstance(part, bytes) else part
+                            for part, enc in decoded_parts
+                        ])
+                    except Exception:
+                        subj = subj_raw
+                    subjects.append(subj)
+
+        mail.close()
+        mail.logout()
+
+        return jsonify({'imap': 'ok', 'unseen_count': unseen_count, 'subjects': subjects})
+    except Exception as e:
+        logging.exception('IMAP status check failed: %s', e)
         return jsonify({'error': str(e)}), 500
 
 def email_checker():
