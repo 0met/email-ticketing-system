@@ -6,7 +6,7 @@
     <title>Mail Ticketing System</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-      :root{--bg:#f8fafc;--card:#ffffff;--muted:#475569;--accent:#0f62fe;--muted-2:#94a3b8}
+      :root{--bg:#eef7fb;--card:#ffffff;--muted:#475569;--accent:#0f62fe;--accent-2:#06b6d4}
       *{box-sizing:border-box}
       body{font-family:Inter,system-ui,Segoe UI,Roboto,-apple-system,Arial;background:var(--bg);margin:0;color:#0b1220}
 
@@ -14,25 +14,36 @@
       .topbar{height:56px;background:#ffffff;border-bottom:1px solid #eef2f7;display:flex;align-items:center;padding:0 20px;box-shadow:0 1px 0 rgba(15,23,42,0.02)}
       .topbar .brand{display:flex;align-items:center;gap:12px}
       .topbar .brand .logo{width:36px;height:36px;background:#f1f5f9;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--accent);font-weight:700;border:1px solid #eef2f7}
-      .layout{display:flex;min-height:calc(100vh - 56px)}
-      .sidebar{width:220px;background:#ffffff;border-right:1px solid #eef2f7;padding:18px;box-shadow:0 2px 8px rgba(15,23,42,0.02)}
+  .layout{display:flex;min-height:calc(100vh - 56px)}
+  .sidebar{width:80px;background:transparent;padding:18px 10px}
+  .sidebar .icon{height:8px;display:block;margin:18px 0;width:100%;}
       .sidebar .nav-item{padding:10px 12px;border-radius:6px;color:var(--muted);display:flex;align-items:center;gap:10px;cursor:pointer}
       .sidebar .nav-item.active{background:#f1f5ff;color:var(--accent);font-weight:600}
 
-      .content{flex:1;padding:20px}
-      .content .card{background:var(--card);border-radius:8px;padding:16px;border:1px solid #eef2f7}
+  .content{flex:1;padding:28px}
+  .content .card{background:var(--card);border-radius:14px;padding:20px;border:1px solid rgba(15,23,42,0.04);box-shadow:0 10px 30px rgba(2,6,23,0.06)}
 
-      /* Table-style ticket list */
-      table.tickets-table{width:100%;border-collapse:collapse}
-      table.tickets-table thead th{background:#fbfdff;text-align:left;padding:12px;border-bottom:1px solid #eef2f7;color:var(--muted-2);font-weight:600}
-      table.tickets-table tbody td{padding:12px;border-bottom:1px solid #f1f5f9}
+  /* hero stats */
+  .hero{display:flex;gap:20px;align-items:flex-start;margin-bottom:18px}
+  .greeting{flex:1}
+  .stats-row{display:flex;gap:12px;align-items:center}
+  .stat-card{background:linear-gradient(180deg,#ffffff,#fbfdff);padding:18px;border-radius:12px;min-width:140px;border:1px solid rgba(15,23,42,0.03);box-shadow:0 8px 24px rgba(2,6,23,0.04)}
+  .stat-number{font-size:28px;font-weight:700}
+  .stat-label{color:var(--muted);font-size:13px}
+
+  /* main content areas */
+  .main-grid{display:grid;grid-template-columns:1fr 320px;gap:20px}
+  .large-panel{border-radius:14px;padding:18px;background:linear-gradient(180deg,#ffffff,#fbfdff);border:1px solid rgba(15,23,42,0.03);box-shadow:0 12px 30px rgba(2,6,23,0.05)}
+  .kanban{display:flex;gap:12px}
+  .kanban-column{background:#f8fbff;border-radius:10px;padding:12px;min-width:180px}
+  .kanban-card{background:#fff;border-radius:8px;padding:10px;margin-bottom:8px;border:1px solid #eef4ff}
       .status-badge{padding:6px 10px;border-radius:999px;font-weight:600;font-size:12px}
       .status-open{background:#eefcf6;color:#027a48}
       .status-closed{background:#eef2ff;color:#334155}
       .status-pending{background:#fff7ed;color:#b45309}
 
-      .controls{display:flex;gap:8px;align-items:center}
-      .btn{background:var(--accent);color:white;padding:8px 12px;border-radius:6px;border:none;cursor:pointer}
+  .controls{display:flex;gap:8px;align-items:center}
+  .btn{background:var(--accent);color:white;padding:8px 12px;border-radius:6px;border:none;cursor:pointer}
       .muted{color:var(--muted)}
 
       @media(max-width:900px){.sidebar{display:none}.layout{flex-direction:column}}
@@ -61,49 +72,56 @@
       </div>
 
       <div class="content">
-        <div id="tickets" class="card">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-            <div>
-              <h2 style="margin:0;font-size:16px">Tickets</h2>
-              <div class="muted" style="font-size:13px">List of recent tickets</div>
+        <!-- Hero section -->
+        <div class="hero">
+          <div class="greeting">
+            <h1 style="margin:0 0 8px 0">Good morning, Admin!</h1>
+            <div class="muted">Overview of your support inbox</div>
+          </div>
+          <div class="stats-row">
+            <div class="stat-card"><div class="stat-number" id="stat1">0</div><div class="stat-label">New Today</div></div>
+            <div class="stat-card"><div class="stat-number" id="stat2">0</div><div class="stat-label">Avg. Reply</div></div>
+            <div class="stat-card"><div class="stat-number" id="stat3">0</div><div class="stat-label">Open</div></div>
+          </div>
+        </div>
+
+        <div class="main-grid">
+          <div class="large-panel">
+            <h3 style="margin-top:0">Upcoming / Recent Tickets</h3>
+            <div style="height:220px;overflow:auto;margin-top:12px">
+              <table style="width:100%;border-collapse:collapse">
+                <thead><tr><th style="text-align:left;color:var(--muted)">Ticket</th><th style="text-align:left;color:var(--muted)">Subject</th><th style="text-align:left;color:var(--muted)">Status</th></tr></thead>
+                <tbody id="ticketsTableBody">
+                  <tr><td colspan="3" class="muted">Loading...</td></tr>
+                </tbody>
+              </table>
             </div>
-            <div class="muted">Total: <span id="totalCount">0</span></div>
           </div>
 
-          <table class="tickets-table">
-            <thead>
-              <tr><th>Ticket</th><th>Subject</th><th>Sender</th><th>Status</th><th>Updated</th></tr>
-            </thead>
-            <tbody id="ticketsTableBody">
-              <tr><td colspan="5" class="muted">Loading...</td></tr>
-            </tbody>
-          </table>
+          <div style="width:320px;display:flex;flex-direction:column;gap:12px">
+            <div class="card" style="border-radius:12px">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <strong>Actions</strong>
+                <button class="btn" onclick="triggerCheck()">Run IMAP Check</button>
+              </div>
+              <div style="margin-top:10px;color:var(--muted)">Quick admin actions and status</div>
+            </div>
+
+            <div class="card" style="border-radius:12px">
+              <strong>Notifications</strong>
+              <div id="adminOutput" style="margin-top:8px;color:var(--muted);font-size:13px">(no recent activity)</div>
+            </div>
+          </div>
         </div>
 
-        <div id="analytics" class="card" style="display:none;margin-top:16px">
-          <h2 style="margin:0 0 12px 0">Analytics</h2>
-          <div class="stats">
-            <div class="stat"><div class="num" id="openCount">0</div><div class="muted">Open</div></div>
-            <div class="stat"><div class="num" id="closedCount">0</div><div class="muted">Closed</div></div>
-            <div class="stat"><div class="num" id="pendingCount">0</div><div class="muted">Pending</div></div>
-          </div>
-          <canvas id="statusChart" width="400" height="200"></canvas>
-        </div>
-
-        <div id="settings" class="card" style="display:none;margin-top:16px">
-          <h2 style="margin:0 0 12px 0">Settings</h2>
-          <div class="muted">Admin token is required for admin actions.</div>
-          <div style="margin-top:12px;display:flex;gap:8px">
-            <input id="adminToken" type="password" placeholder="Admin token" style="flex:1;padding:8px;border-radius:6px;border:1px solid #eef2f7" />
-            <button class="btn" onclick="saveToken()">Save</button>
-          </div>
-          <div style="margin-top:12px;display:flex;gap:8px">
-            <button class="btn" onclick="imapStatus()">IMAP Status</button>
-            <button class="btn" style="background:#10b981" onclick="triggerCheck()">Run Check</button>
-          </div>
-          <div style="margin-top:12px">
-            <h4 style="margin:0 0 8px 0">Last admin response</h4>
-            <pre id="adminOutput" style="background:#f8fafc;padding:12px;border-radius:6px;border:1px solid #eef2f7">(none)</pre>
+        <!-- Kanban-style analytics lower area -->
+        <div style="margin-top:22px">
+          <h3 style="margin:0 0 12px 0">Workflow (Kanban)</h3>
+          <div class="kanban">
+            <div class="kanban-column"><strong>New</strong><div class="kanban-card">Example ticket</div></div>
+            <div class="kanban-column"><strong>In Progress</strong><div class="kanban-card">Example ticket</div></div>
+            <div class="kanban-column"><strong>Review</strong><div class="kanban-card">Example ticket</div></div>
+            <div class="kanban-column"><strong>Closed</strong><div class="kanban-card">Example ticket</div></div>
           </div>
         </div>
       </div>
@@ -147,20 +165,25 @@
       function renderTicketsTable(){
         const tbody = document.getElementById('ticketsTableBody');
         tbody.innerHTML = '';
-        if(!ticketsData || ticketsData.length===0){ tbody.innerHTML = '<tr><td colspan="5" class="muted">No tickets yet</td></tr>'; return }
+        if(!ticketsData || ticketsData.length===0){ tbody.innerHTML = '<tr><td colspan="3" class="muted">No tickets yet</td></tr>'; return }
         ticketsData.forEach(t=>{
           const statusClass = t.status === 'closed' ? 'status-closed' : (t.status === 'pending' ? 'status-pending' : 'status-open');
           const tr = document.createElement('tr');
           tr.innerHTML = `
-            <td>${escapeHtml(t.ticket_id)}</td>
+            <td style="width:120px">${escapeHtml(t.ticket_id)}</td>
             <td>${escapeHtml(t.subject||'No subject')}</td>
-            <td>${escapeHtml(t.sender_email||'')}</td>
-            <td><span class="status-badge ${statusClass}">${escapeHtml(t.status)}</span></td>
-            <td>${new Date(t.updated_at).toLocaleString()}</td>
+            <td style="width:120px"><span class="status-badge ${statusClass}">${escapeHtml(t.status)}</span></td>
           `;
           tbody.appendChild(tr);
         });
         document.getElementById('totalCount').innerText = ticketsData.length;
+
+        // hero stats
+        const open = ticketsData.filter(t => t.status === 'open').length;
+        const pending = ticketsData.filter(t => t.status === 'pending').length;
+        document.getElementById('stat1').innerText = ticketsData.filter(t => new Date(t.created_at) > new Date(Date.now() - 24*60*60*1000)).length;
+        document.getElementById('stat2').innerText = '—';
+        document.getElementById('stat3').innerText = open;
       }
 
       function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[c]) }
