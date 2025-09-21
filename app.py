@@ -3,6 +3,9 @@ import sqlite3
 import smtplib
 import imaplib
 import email
+import logging
+from email.header import decode_header
+from email.utils import parseaddr
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
@@ -15,10 +18,13 @@ import base64
 import json
 from threading import Thread
 import time
-import schedule
+# schedule is not used by the current polling loop; kept in requirements for future use
 
 app = Flask(__name__)
 CORS(app)
+
+# Basic logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
 
 # Configuration - Set these as environment variables
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'imap.gmail.com')
@@ -27,6 +33,8 @@ SMTP_HOST = os.getenv('SMTP_HOST', 'smtp.gmail.com')
 SMTP_PORT = int(os.getenv('SMTP_PORT', 587))
 EMAIL_USER = os.getenv('EMAIL_USER', 'your-email@gmail.com')
 EMAIL_PASS = os.getenv('EMAIL_PASS', 'your-app-password')
+EMAIL_CHECK_INTERVAL = int(os.getenv('EMAIL_CHECK_INTERVAL', 30))
+ADMIN_TOKEN = os.getenv('ADMIN_TOKEN', '')
 UPLOAD_FOLDER = 'attachments'
 
 # Ensure upload folder exists
@@ -205,18 +213,30 @@ class EmailProcessor:
         try:
             mail = imaplib.IMAP4_SSL(EMAIL_HOST, EMAIL_PORT)
             mail.login(EMAIL_USER, EMAIL_PASS)
+            logging.info('IMAP login successful')
             return mail
         except Exception as e:
-            print(f"IMAP connection failed: {e}")
+            logging.error(f"IMAP connection failed: {e}")
             return None
     
     def process_email(self, msg):
         """Process incoming email and create ticket"""
         try:
-            subject = msg.get('subject', 'No Subject')
-            sender = msg.get('from', '')
-            sender_email = sender.split('<')[-1].replace('>', '') if '<' in sender else sender
-            sender_name = sender.split('<')[0].strip() if '<' in sender else sender_email
+            # Decode subject safely
+            raw_subject = msg.get('subject', 'No Subject')
+            try:
+                decoded_parts = decode_header(raw_subject)
+                subject = ''.join([
+                    part.decode(enc or 'utf-8') if isinstance(part, bytes) else part
+                    for part, enc in decoded_parts
+                ])
+            except Exception:
+                subject = raw_subject
+
+            # Parse sender/email reliably
+            raw_from = msg.get('from', '')
+            sender_name, sender_email = parseaddr(raw_from)
+            sender_name = sender_name or sender_email
             
             # Get email content
             content = ""
@@ -224,35 +244,51 @@ class EmailProcessor:
             
             if msg.is_multipart():
                 for part in msg.walk():
-                    if part.get_content_type() == "text/plain":
-                        content += part.get_payload(decode=True).decode('utf-8', errors='ignore')
-                    elif part.get_content_type() == "text/html":
-                        if not content:  # Use HTML if no plain text
-                            content = part.get_payload(decode=True).decode('utf-8', errors='ignore')
-                    
+                    content_type = part.get_content_type()
+                    payload = part.get_payload(decode=True)
+                    if payload:
+                        charset = part.get_content_charset() or 'utf-8'
+                        try:
+                            text = payload.decode(charset, errors='ignore')
+                        except Exception:
+                            text = payload.decode('utf-8', errors='ignore')
+
+                        if content_type == 'text/plain':
+                            content += text
+                        elif content_type == 'text/html' and not content:
+                            content = text
+
                     # Handle attachments
                     filename = part.get_filename()
                     if filename:
                         file_path = os.path.join(UPLOAD_FOLDER, filename)
-                        with open(file_path, 'wb') as f:
-                            f.write(part.get_payload(decode=True))
-                        
-                        attachments.append({
-                            'filename': filename,
-                            'path': file_path,
-                            'size': os.path.getsize(file_path)
-                        })
+                        try:
+                            with open(file_path, 'wb') as f:
+                                f.write(part.get_payload(decode=True))
+
+                            attachments.append({
+                                'filename': filename,
+                                'path': file_path,
+                                'size': os.path.getsize(file_path)
+                            })
+                        except Exception as e:
+                            logging.warning(f"Failed to save attachment {filename}: {e}")
             else:
-                content = msg.get_payload(decode=True).decode('utf-8', errors='ignore')
+                payload = msg.get_payload(decode=True)
+                if payload:
+                    try:
+                        content = payload.decode(msg.get_content_charset() or 'utf-8', errors='ignore')
+                    except Exception:
+                        content = payload.decode('utf-8', errors='ignore')
             
             # Create ticket
             ticket_id = ticketing.create_ticket(subject, sender_email, sender_name, content, attachments)
-            print(f"Created ticket {ticket_id} for {sender_email}")
+            logging.info(f"Created ticket %s for %s", ticket_id, sender_email)
             
             return ticket_id
             
         except Exception as e:
-            print(f"Error processing email: {e}")
+            logging.exception(f"Error processing email: {e}")
             return None
     
     def check_emails(self):
@@ -264,28 +300,40 @@ class EmailProcessor:
         try:
             mail.select('inbox')
             status, messages = mail.search(None, 'UNSEEN')
-            
+
             if status == 'OK':
-                email_ids = messages[0].split()
-                
-                for email_id in email_ids:
-                    status, msg_data = mail.fetch(email_id, '(RFC822)')
-                    
-                    if status == 'OK':
-                        email_body = msg_data[0][1]
-                        email_message = email.message_from_bytes(email_body)
-                        
-                        # Check if we've already processed this email
-                        email_hash = hashlib.md5(email_body).hexdigest()
-                        if email_hash not in self.processed_emails:
-                            self.process_email(email_message)
-                            self.processed_emails.add(email_hash)
+                # messages[0] may be an empty byte string when there are no results
+                if not messages or not messages[0]:
+                    logging.debug('No unseen messages')
+                else:
+                    email_ids = messages[0].split()
+
+                    for email_id in email_ids:
+                        status, msg_data = mail.fetch(email_id, '(RFC822)')
+                        if status == 'OK' and msg_data and msg_data[0]:
+                            email_body = msg_data[0][1]
+                            email_message = email.message_from_bytes(email_body)
+
+                            # Check if we've already processed this email
+                            email_hash = hashlib.md5(email_body).hexdigest()
+                            if email_hash not in self.processed_emails:
+                                self.process_email(email_message)
+                                self.processed_emails.add(email_hash)
+                                try:
+                                    # Mark message as Seen to avoid reprocessing
+                                    mail.store(email_id, '+FLAGS', '\\Seen')
+                                except Exception as e:
+                                    logging.warning('Failed to mark message seen: %s', e)
+                            else:
+                                logging.debug('Email already processed (hash=%s)', email_hash)
+            else:
+                logging.warning('IMAP search returned non-OK status: %s', status)
             
             mail.close()
             mail.logout()
             
         except Exception as e:
-            print(f"Error checking emails: {e}")
+            logging.exception('Error checking emails: %s', e)
     
     def send_email(self, to_email, subject, content, ticket_id):
         """Send email response"""
@@ -379,14 +427,33 @@ def download_attachment(attachment_id):
     
     return jsonify({'error': 'File not found'}), 404
 
+
+@app.route('/api/admin/check-emails', methods=['POST'])
+def admin_check_emails():
+    """Protected admin endpoint to trigger an immediate email check.
+
+    Provide header X-Admin-Token or ?token= in query string. ADMIN_TOKEN must be
+    set in environment for this endpoint to accept requests.
+    """
+    token = request.headers.get('X-Admin-Token') or request.args.get('token')
+    if not ADMIN_TOKEN or token != ADMIN_TOKEN:
+        return jsonify({'error': 'unauthorized'}), 401
+
+    try:
+        email_processor.check_emails()
+        return jsonify({'success': True})
+    except Exception as e:
+        logging.exception('Manual email check failed: %s', e)
+        return jsonify({'error': str(e)}), 500
+
 def email_checker():
     """Background email checker"""
     while True:
         try:
             email_processor.check_emails()
-            time.sleep(30)  # Check every 30 seconds
+            time.sleep(EMAIL_CHECK_INTERVAL)  # Check interval configurable via EMAIL_CHECK_INTERVAL
         except Exception as e:
-            print(f"Email checker error: {e}")
+            logging.exception('Email checker error: %s', e)
             time.sleep(60)  # Wait longer if there's an error
 
 # Start email checker in background
