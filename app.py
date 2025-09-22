@@ -395,10 +395,35 @@ class EmailProcessor:
 # Initialize email processor
 email_processor = EmailProcessor()
 
+# Background email check worker
+def background_worker():
+    """Background thread to check emails periodically"""
+    while True:
+        try:
+            email_processor.check_emails()
+        except Exception as e:
+            logging.exception('Background worker error: %s', e)
+        time.sleep(EMAIL_CHECK_INTERVAL)
+
+# Start background worker
+Thread(target=background_worker, daemon=True).start()
+
 # Flask Routes
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/api/status')
+def get_status():
+    """Get email checking status"""
+    imap = email_processor.connect_imap()
+    is_connected = imap is not None
+    if imap:
+        imap.logout()
+    return jsonify({
+        'connected': is_connected,
+        'last_check': datetime.now().isoformat()
+    })
 
 @app.route('/api/tickets')
 def get_tickets():
