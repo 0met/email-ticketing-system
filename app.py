@@ -612,7 +612,11 @@ def get_tickets():
     try:
         status = request.args.get('status')
         logger.info(f"Fetching tickets with status filter: {status}")
-        
+        tickets = ticketing.get_tickets(status)
+        return jsonify(tickets)
+    except Exception as e:
+        logger.exception("Error getting tickets: %s", e)
+        return jsonify({'error': str(e)}), 500
         conn = sqlite3.connect(SQLITE_PATH)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
