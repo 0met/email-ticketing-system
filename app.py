@@ -477,6 +477,42 @@ def admin_check_emails():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/admin/check-emails/unprotected', methods=['POST'])
+def admin_check_emails_unprotected():
+    """Development-only: Trigger email check without ADMIN_TOKEN protection.
+
+    WARNING: This endpoint is unprotected and should NOT be enabled in production.
+    It exists to make local/dev testing from the browser easier.
+    """
+    try:
+        email_processor.check_emails()
+        return jsonify({'success': True, 'note': 'unprotected_endpoint'})
+    except Exception as e:
+        logging.exception('Unprotected manual email check failed: %s', e)
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/admin/set-token', methods=['POST'])
+def admin_set_token():
+    """Set the ADMIN_TOKEN at runtime for the current dyno process.
+
+    This writes the token into the running process (module-level variable and app.config).
+    It does NOT persist across dyno restarts — use Heroku config var ADMIN_TOKEN to persist.
+    This endpoint is intentionally unprotected to allow setting via the UI in dev.
+    WARNING: Using this in production is insecure. Use only for development/testing.
+    """
+    data = request.get_json(force=True) or {}
+    token = data.get('token')
+    if not token:
+        return jsonify({'error': 'token_required'}), 400
+    global ADMIN_TOKEN
+    ADMIN_TOKEN = token
+    # also store in Flask config for convenience
+    app.config['ADMIN_TOKEN'] = token
+    logging.info('ADMIN_TOKEN set at runtime via /api/admin/set-token (dev-only)')
+    return jsonify({'success': True, 'note': 'token_set_runtime_only'})
+
+
 @app.route('/api/admin/imap-status', methods=['GET'])
 def admin_imap_status():
     """Diagnostic endpoint to check IMAP login and unseen message count.

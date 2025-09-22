@@ -143,6 +143,7 @@
               <input id="adminToken" class="form-control" placeholder="Enter admin token" />
               <div style="margin-top:8px;display:flex;gap:8px">
                 <button class="btn" onclick="saveToken()">Save token (session)</button>
+                <button class="btn" onclick="persistTokenServer()" style="background:#0ea5a3">Persist token to dyno (dev only)</button>
                 <button class="btn" style="background:#6b7280" onclick="alert('To persist the admin token across restarts, set the ADMIN_TOKEN config var in Heroku or your environment')">How to persist?</button>
               </div>
               <div style="margin-top:8px;color:var(--muted);font-size:13px">Tip: You can set the ADMIN_TOKEN on Heroku with <code>heroku config:set ADMIN_TOKEN=yourtoken --app YOUR_APP</code></div>
@@ -296,6 +297,28 @@
       // search and filter helpers
       function onSearchKey(e){ if(e.key === 'Enter'){ fetchTickets(document.getElementById('searchBox').value.trim(), document.getElementById('statusFilter').value); } }
       function onFilterChange(){ fetchTickets(document.getElementById('searchBox').value.trim(), document.getElementById('statusFilter').value); }
+
+      // Persist token to running dyno (development only)
+      async function persistTokenServer(){
+        const token = document.getElementById('adminToken').value.trim();
+        if(!token) return alert('Enter token first');
+        try{
+          const r = await fetch('/api/admin/set-token',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token})});
+          const j = await r.json();
+          document.getElementById('adminOutput').innerText = JSON.stringify(j,null,2);
+          alert('Token set for this dyno (runtime only)')
+        }catch(e){ console.error(e); alert('Failed to persist token to dyno') }
+      }
+
+      // Run unprotected check endpoint (development convenience)
+      async function runUnprotectedCheck(){
+        try{
+          const r = await fetch('/api/admin/check-emails/unprotected',{method:'POST'});
+          const j = await r.json();
+          document.getElementById('adminOutput').innerText = JSON.stringify(j,null,2);
+          setTimeout(fetchTickets,2000);
+        }catch(e){ console.error(e); alert('Unprotected check failed') }
+      }
 
       // --- Kanban drag/drop ---
       // make kanban columns droppable and cards draggable
