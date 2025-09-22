@@ -1,0 +1,10 @@
+@app.route('/api/force-check')
+def force_check():
+    """Force an immediate email check"""
+    try:
+        logger.info("Starting forced email check")
+        email_processor.check_emails()
+        return jsonify({"status": "success", "message": "Email check completed"})
+    except Exception as e:
+        logger.exception("Error during forced email check")
+        return jsonify({"status": "error", "message": str(e)}), 500
