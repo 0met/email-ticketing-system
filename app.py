@@ -61,74 +61,94 @@ class TicketingSystem:
     
     def init_database(self):
         """Initialize SQLite database"""
-        conn = sqlite3.connect(SQLITE_PATH)
-        cursor = conn.cursor()
-        
-        # Create tickets table
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS tickets (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                ticket_id TEXT UNIQUE,
-                subject TEXT,
-                sender_email TEXT,
-                sender_name TEXT,
-                content TEXT,
-                status TEXT DEFAULT 'open',
-                priority TEXT DEFAULT 'medium',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                assigned_to TEXT,
-                category TEXT
-            )
-        ''')
-        
-        # Create responses table
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS responses (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                ticket_id TEXT,
-                response_type TEXT,
-                sender TEXT,
-                content TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (ticket_id) REFERENCES tickets (ticket_id)
-            )
-        ''')
-        
-        # Create attachments table
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS attachments (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                ticket_id TEXT,
-                response_id INTEGER,
-                filename TEXT,
-                file_path TEXT,
-                file_size INTEGER,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (ticket_id) REFERENCES tickets (ticket_id),
-                FOREIGN KEY (response_id) REFERENCES responses (id)
-            )
-        ''')
+        try:
+            logger.info(f"Initializing database at {SQLITE_PATH}")
+            conn = sqlite3.connect(SQLITE_PATH)
+            cursor = conn.cursor()
+            
+            # Create tickets table
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS tickets (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ticket_id TEXT UNIQUE,
+                    subject TEXT,
+                    sender_email TEXT,
+                    sender_name TEXT,
+                    content TEXT,
+                    status TEXT DEFAULT 'open',
+                    priority TEXT DEFAULT 'medium',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    assigned_to TEXT,
+                    category TEXT
+                )
+            ''')
+            
+            # Create responses table
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS responses (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ticket_id TEXT,
+                    response_type TEXT,
+                    sender TEXT,
+                    content TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (ticket_id) REFERENCES tickets (ticket_id)
+                )
+            ''')
+            
+            # Create attachments table
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS attachments (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ticket_id TEXT,
+                    response_id INTEGER,
+                    filename TEXT,
+                    file_path TEXT,
+                    file_size INTEGER,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (ticket_id) REFERENCES tickets (ticket_id),
+                    FOREIGN KEY (response_id) REFERENCES responses (id)
+                )
+            ''')
 
-        # Create processed messages table to persist message hashes and avoid reprocessing
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS processed_messages (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                msg_hash TEXT UNIQUE,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-        
-        conn.commit()
-        conn.close()
+            # Create processed messages table to persist message hashes and avoid reprocessing
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS processed_messages (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    msg_hash TEXT UNIQUE,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            
+            conn.commit()
+            logger.info("Database tables created successfully")
+            
+        except sqlite3.Error as e:
+            logger.error(f"SQLite error during initialization: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Error initializing database: {e}")
+            raise
+        finally:
+            if conn:
+                conn.close()
+                logger.info("Database connection closed")
 
     def is_message_processed(self, msg_hash):
-        conn = sqlite3.connect(SQLITE_PATH)
-        cursor = conn.cursor()
-        cursor.execute('SELECT 1 FROM processed_messages WHERE msg_hash = ?', (msg_hash,))
-        exists = cursor.fetchone() is not None
-        conn.close()
-        return exists
+        """Check if a message has already been processed"""
+        try:
+            conn = sqlite3.connect(SQLITE_PATH)
+            cursor = conn.cursor()
+            cursor.execute('SELECT 1 FROM processed_messages WHERE msg_hash = ?', (msg_hash,))
+            exists = cursor.fetchone() is not None
+            return exists
+        except Exception as e:
+            logger.error(f"Error checking processed message: {e}")
+            return False
+        finally:
+            if conn:
+                conn.close()
 
     def mark_message_processed(self, msg_hash):
         conn = sqlite3.connect(SQLITE_PATH)
@@ -242,8 +262,18 @@ class TicketingSystem:
         conn.commit()
         conn.close()
 
-# Initialize ticketing system
+# Ensure database directory exists
+os.makedirs(os.path.dirname(SQLITE_PATH), exist_ok=True)
+
+# Initialize ticketing system and create database
 ticketing = TicketingSystem()
+
+# Pre-create empty database if it doesn't exist
+if not os.path.exists(SQLITE_PATH):
+    logger.info(f"Creating new database at {SQLITE_PATH}")
+    conn = sqlite3.connect(SQLITE_PATH)
+    conn.close()
+    logger.info("Database created successfully")
 
 class EmailProcessor:
     def __init__(self):
@@ -560,15 +590,32 @@ def test_connection():
 
 @app.route('/api/tickets')
 def get_tickets():
+    """Get all tickets or filter by status"""
     try:
         status = request.args.get('status')
-        all_tickets = ticketing.get_tickets(status)
-        if all_tickets is None:
-            all_tickets = []
-        return jsonify(all_tickets)
+        logger.info(f"Fetching tickets with status filter: {status}")
+        
+        conn = sqlite3.connect(SQLITE_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        if status:
+            cursor.execute('SELECT * FROM tickets WHERE status = ? ORDER BY updated_at DESC', (status,))
+        else:
+            cursor.execute('SELECT * FROM tickets ORDER BY updated_at DESC')
+        
+        rows = cursor.fetchall()
+        tickets = [dict(row) for row in rows]
+        logger.info(f"Found {len(tickets)} tickets")
+        
+        return jsonify(tickets)
+        
     except Exception as e:
         logger.error(f"Error getting tickets: {e}")
         return jsonify({'error': str(e)}), 500
+    finally:
+        if 'conn' in locals():
+            conn.close()
 
 @app.route('/api/tickets/<ticket_id>')
 def get_ticket(ticket_id):
