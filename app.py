@@ -440,12 +440,15 @@ def index():
 def analytics():
     """Analytics page showing ticket statistics"""
     try:
+        logger.info('Starting analytics page render')
         conn = sqlite3.connect(SQLITE_PATH)
+        logger.info(f'Connected to database at {SQLITE_PATH}')
         cursor = conn.cursor()
         
         # Get total tickets
         cursor.execute('SELECT COUNT(*) FROM tickets')
-        total_tickets = cursor.fetchone()[0]
+        total_tickets = cursor.fetchone()[0] if cursor.fetchone() else 0
+        logger.info(f'Found {total_tickets} total tickets')
         
         # Get tickets by status
         cursor.execute('''
@@ -559,8 +562,10 @@ def test_connection():
 def get_tickets():
     try:
         status = request.args.get('status')
-        tickets = ticketing.get_tickets(status)
-        return jsonify(tickets)
+        all_tickets = ticketing.get_tickets(status)
+        if all_tickets is None:
+            all_tickets = []
+        return jsonify(all_tickets)
     except Exception as e:
         logger.error(f"Error getting tickets: {e}")
         return jsonify({'error': str(e)}), 500
