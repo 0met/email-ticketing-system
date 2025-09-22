@@ -37,6 +37,8 @@ EMAIL_CHECK_INTERVAL = int(os.getenv('EMAIL_CHECK_INTERVAL', 30))
 EMAIL_SEARCH_CRITERIA = os.getenv('EMAIL_SEARCH_CRITERIA', 'UNSEEN')
 ADMIN_TOKEN = os.getenv('ADMIN_TOKEN', '')
 UPLOAD_FOLDER = 'attachments'
+# Enable dev-only endpoints (unprotected) when set to true. Defaults to False in production.
+ENABLE_DEV_ENDPOINTS = os.getenv('ENABLE_DEV_ENDPOINTS', 'false').lower() in ('1', 'true', 'yes')
 
 # Ensure upload folder exists
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -477,40 +479,43 @@ def admin_check_emails():
         return jsonify({'error': str(e)}), 500
 
 
-@app.route('/api/admin/check-emails/unprotected', methods=['POST'])
-def admin_check_emails_unprotected():
-    """Development-only: Trigger email check without ADMIN_TOKEN protection.
+if ENABLE_DEV_ENDPOINTS:
+    @app.route('/api/admin/check-emails/unprotected', methods=['POST'])
+    def admin_check_emails_unprotected():
+        """Development-only: Trigger email check without ADMIN_TOKEN protection.
 
-    WARNING: This endpoint is unprotected and should NOT be enabled in production.
-    It exists to make local/dev testing from the browser easier.
-    """
-    try:
-        email_processor.check_emails()
-        return jsonify({'success': True, 'note': 'unprotected_endpoint'})
-    except Exception as e:
-        logging.exception('Unprotected manual email check failed: %s', e)
-        return jsonify({'error': str(e)}), 500
+        WARNING: This endpoint is unprotected and should NOT be enabled in production.
+        It exists to make local/dev testing from the browser easier.
+        """
+        try:
+            email_processor.check_emails()
+            return jsonify({'success': True, 'note': 'unprotected_endpoint'})
+        except Exception as e:
+            logging.exception('Unprotected manual email check failed: %s', e)
+            return jsonify({'error': str(e)}), 500
 
 
-@app.route('/api/admin/set-token', methods=['POST'])
-def admin_set_token():
-    """Set the ADMIN_TOKEN at runtime for the current dyno process.
+    @app.route('/api/admin/set-token', methods=['POST'])
+    def admin_set_token():
+        """Set the ADMIN_TOKEN at runtime for the current dyno process.
 
-    This writes the token into the running process (module-level variable and app.config).
-    It does NOT persist across dyno restarts — use Heroku config var ADMIN_TOKEN to persist.
-    This endpoint is intentionally unprotected to allow setting via the UI in dev.
-    WARNING: Using this in production is insecure. Use only for development/testing.
-    """
-    data = request.get_json(force=True) or {}
-    token = data.get('token')
-    if not token:
-        return jsonify({'error': 'token_required'}), 400
-    global ADMIN_TOKEN
-    ADMIN_TOKEN = token
-    # also store in Flask config for convenience
-    app.config['ADMIN_TOKEN'] = token
-    logging.info('ADMIN_TOKEN set at runtime via /api/admin/set-token (dev-only)')
-    return jsonify({'success': True, 'note': 'token_set_runtime_only'})
+        This writes the token into the running process (module-level variable and app.config).
+        It does NOT persist across dyno restarts — use Heroku config var ADMIN_TOKEN to persist.
+        This endpoint is intentionally unprotected to allow setting via the UI in dev.
+        WARNING: Using this in production is insecure. Use only for development/testing.
+        """
+        data = request.get_json(force=True) or {}
+        token = data.get('token')
+        if not token:
+            return jsonify({'error': 'token_required'}), 400
+        global ADMIN_TOKEN
+        ADMIN_TOKEN = token
+        # also store in Flask config for convenience
+        app.config['ADMIN_TOKEN'] = token
+        logging.info('ADMIN_TOKEN set at runtime via /api/admin/set-token (dev-only)')
+        return jsonify({'success': True, 'note': 'token_set_runtime_only'})
+else:
+    logging.info('Dev endpoints disabled (ENABLE_DEV_ENDPOINTS not set)')
 
 
 @app.route('/api/admin/imap-status', methods=['GET'])
