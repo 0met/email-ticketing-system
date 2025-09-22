@@ -1,5 +1,4 @@
 import os
-import sqlite3
 import smtplib
 import imaplib
 import email
@@ -16,16 +15,22 @@ from datetime import datetime
 import hashlib
 import base64
 import json
-from threading import Thread
 import time
-# schedule is not used by the current polling loop; kept in requirements for future use
+from threading import Thread
+from sqlalchemy import (
+    create_engine, MetaData, Table, Column,
+    Integer, String, Text, DateTime, Boolean,
+    func, text, select
+)
+from sqlalchemy.sql import select, and_, or_
+from sqlalchemy.exc import SQLAlchemyError
 
 app = Flask(__name__)
 CORS(app)
 
 # Enhanced logging
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format='%(asctime)s %(levelname)s [%(name)s] %(message)s',
     handlers=[
         logging.StreamHandler()
@@ -33,6 +38,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger('email-ticketing')
 logger.setLevel(logging.DEBUG)
+
+# Add root logger for unhandled exceptions
+root_logger = logging.getLogger()
+root_logger.setLevel(logging.DEBUG)
 
 # Configuration - Set these as environment variables
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'imap.gmail.com')
@@ -45,9 +54,56 @@ EMAIL_CHECK_INTERVAL = int(os.getenv('EMAIL_CHECK_INTERVAL', 30))
 EMAIL_SEARCH_CRITERIA = os.getenv('EMAIL_SEARCH_CRITERIA', 'UNSEEN')
 ADMIN_TOKEN = os.getenv('ADMIN_TOKEN', '')
 UPLOAD_FOLDER = 'attachments'
-# Database and upload paths
-SQLITE_PATH = os.getenv('SQLITE_PATH', 'tickets.db')
-UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER', 'attachments')
+# Database configuration
+DATABASE_URL = os.getenv('DATABASE_URL')
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    # Heroku's DATABASE_URL needs to be converted to use postgresql://
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+# Initialize database engine
+engine = create_engine(DATABASE_URL)
+metadata = MetaData()
+
+# Define tables
+tickets = Table('tickets', metadata,
+    Column('id', Integer, primary_key=True),
+    Column('ticket_id', String, unique=True),
+    Column('subject', String),
+    Column('sender_email', String),
+    Column('sender_name', String),
+    Column('content', Text),
+    Column('status', String, server_default='open'),
+    Column('priority', String, server_default='medium'),
+    Column('created_at', DateTime, server_default='CURRENT_TIMESTAMP'),
+    Column('updated_at', DateTime, server_default='CURRENT_TIMESTAMP'),
+    Column('assigned_to', String),
+    Column('category', String)
+)
+
+responses = Table('responses', metadata,
+    Column('id', Integer, primary_key=True),
+    Column('ticket_id', String),
+    Column('response_type', String),
+    Column('sender', String),
+    Column('content', Text),
+    Column('created_at', DateTime, server_default='CURRENT_TIMESTAMP')
+)
+
+attachments = Table('attachments', metadata,
+    Column('id', Integer, primary_key=True),
+    Column('ticket_id', String),
+    Column('response_id', Integer),
+    Column('filename', String),
+    Column('file_path', String),
+    Column('file_size', Integer),
+    Column('created_at', DateTime, server_default='CURRENT_TIMESTAMP')
+)
+
+processed_messages = Table('processed_messages', metadata,
+    Column('id', Integer, primary_key=True),
+    Column('msg_hash', String, unique=True),
+    Column('created_at', DateTime, server_default='CURRENT_TIMESTAMP')
+)
 
 # Enable dev-only endpoints (unprotected) when set to true. Defaults to False in production.
 ENABLE_DEV_ENDPOINTS = os.getenv('ENABLE_DEV_ENDPOINTS', 'false').lower() in ('1', 'true', 'yes')
@@ -60,104 +116,51 @@ class TicketingSystem:
         self.init_database()
     
     def init_database(self):
-        """Initialize SQLite database"""
+        """Initialize PostgreSQL database"""
         try:
-            logger.info(f"Initializing database at {SQLITE_PATH}")
-            conn = sqlite3.connect(SQLITE_PATH)
-            cursor = conn.cursor()
+            logger.info("Starting database initialization...")
+            logger.debug("Database URL type: %s", DATABASE_URL.split('://')[0] if DATABASE_URL else 'None')
+            logger.info("Creating database engine...")
             
-            # Create tickets table
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS tickets (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    ticket_id TEXT UNIQUE,
-                    subject TEXT,
-                    sender_email TEXT,
-                    sender_name TEXT,
-                    content TEXT,
-                    status TEXT DEFAULT 'open',
-                    priority TEXT DEFAULT 'medium',
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    assigned_to TEXT,
-                    category TEXT
-                )
-            ''')
+            # Test database connection
+            with engine.connect() as conn:
+                logger.info("Database connection test successful")
             
-            # Create responses table
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS responses (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    ticket_id TEXT,
-                    response_type TEXT,
-                    sender TEXT,
-                    content TEXT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY (ticket_id) REFERENCES tickets (ticket_id)
-                )
-            ''')
-            
-            # Create attachments table
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS attachments (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    ticket_id TEXT,
-                    response_id INTEGER,
-                    filename TEXT,
-                    file_path TEXT,
-                    file_size INTEGER,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY (ticket_id) REFERENCES tickets (ticket_id),
-                    FOREIGN KEY (response_id) REFERENCES responses (id)
-                )
-            ''')
-
-            # Create processed messages table to persist message hashes and avoid reprocessing
-            cursor.execute('''
-                CREATE TABLE IF NOT EXISTS processed_messages (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    msg_hash TEXT UNIQUE,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            ''')
-            
-            conn.commit()
+            # Create all tables
+            logger.info("Creating database tables...")
+            metadata.create_all(engine)
             logger.info("Database tables created successfully")
             
-        except sqlite3.Error as e:
-            logger.error(f"SQLite error during initialization: {e}")
+        except SQLAlchemyError as e:
+            logger.error("Database error during initialization: %s", str(e))
+            logger.debug("Full database error details:", exc_info=True)
             raise
         except Exception as e:
-            logger.error(f"Error initializing database: {e}")
+            logger.error("Unexpected error initializing database: %s", str(e))
+            logger.debug("Full error details:", exc_info=True)
             raise
-        finally:
-            if conn:
-                conn.close()
-                logger.info("Database connection closed")
 
     def is_message_processed(self, msg_hash):
         """Check if a message has already been processed"""
         try:
-            conn = sqlite3.connect(SQLITE_PATH)
-            cursor = conn.cursor()
-            cursor.execute('SELECT 1 FROM processed_messages WHERE msg_hash = ?', (msg_hash,))
-            exists = cursor.fetchone() is not None
-            return exists
+            with engine.connect() as conn:
+                query = select(processed_messages).where(processed_messages.c.msg_hash == msg_hash)
+                result = conn.execute(query)
+                return result.first() is not None
         except Exception as e:
             logger.error(f"Error checking processed message: {e}")
             return False
-        finally:
-            if conn:
-                conn.close()
 
     def mark_message_processed(self, msg_hash):
-        conn = sqlite3.connect(SQLITE_PATH)
-        cursor = conn.cursor()
+        """Mark a message as processed in the database"""
         try:
-            cursor.execute('INSERT OR IGNORE INTO processed_messages (msg_hash) VALUES (?)', (msg_hash,))
-            conn.commit()
-        finally:
-            conn.close()
+            with engine.connect() as conn:
+                ins = processed_messages.insert().values(msg_hash=msg_hash)
+                conn.execute(ins)
+                conn.commit()
+        except SQLAlchemyError as e:
+            logger.error(f"Error marking message as processed: {e}")
+            raise
     
     def generate_ticket_id(self, email_content):
         """Generate unique ticket ID"""
@@ -167,113 +170,141 @@ class TicketingSystem:
     def create_ticket(self, subject, sender_email, sender_name, content, attachments=None):
         """Create new ticket"""
         ticket_id = self.generate_ticket_id(f"{subject}{sender_email}")
+        logger.info(f"Creating ticket {ticket_id} for {sender_email}")
         
-        conn = sqlite3.connect(SQLITE_PATH)
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            INSERT INTO tickets (ticket_id, subject, sender_email, sender_name, content)
-            VALUES (?, ?, ?, ?, ?)
-        ''', (ticket_id, subject, sender_email, sender_name, content))
-        
-        if attachments:
-            for attachment in attachments:
-                cursor.execute('''
-                    INSERT INTO attachments (ticket_id, filename, file_path, file_size)
-                    VALUES (?, ?, ?, ?)
-                ''', (ticket_id, attachment['filename'], attachment['path'], attachment['size']))
-        
-        conn.commit()
-        conn.close()
-        
-        return ticket_id
+        try:
+            with engine.begin() as conn:  # Automatically manages transaction
+                # Insert ticket
+                ins = tickets.insert().values(
+                    ticket_id=ticket_id,
+                    subject=subject,
+                    sender_email=sender_email,
+                    sender_name=sender_name,
+                    content=content,
+                    status='open',
+                    created_at=func.current_timestamp(),
+                    updated_at=func.current_timestamp()
+                )
+                result = conn.execute(ins)
+                ticket_primary_key = result.inserted_primary_key[0]
+                logger.info(f"Ticket {ticket_id} inserted with ID {ticket_primary_key}")
+                
+                # Insert attachments if any
+                if attachments:
+                    for attachment in attachments:
+                        ins = attachments.insert().values(
+                            ticket_id=ticket_id,
+                            filename=attachment['filename'],
+                            file_path=attachment['path'],
+                            file_size=attachment['size']
+                        )
+                        conn.execute(ins)
+                        logger.info(f"Added attachment {attachment['filename']} to ticket {ticket_id}")
+                
+                # Transaction will be automatically committed here
+                logger.info(f"Ticket {ticket_id} (ID: {ticket_primary_key}) created successfully")
+                return ticket_id
+                
+        except SQLAlchemyError as e:
+            logger.error(f"Database error creating ticket {ticket_id}: {str(e)}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error creating ticket {ticket_id}: {str(e)}")
+            raise
+        except SQLAlchemyError as e:
+            logger.error(f"Error creating ticket: {e}")
+            raise
     
     def add_response(self, ticket_id, response_type, sender, content):
         """Add response to ticket"""
-        conn = sqlite3.connect(SQLITE_PATH)
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            INSERT INTO responses (ticket_id, response_type, sender, content)
-            VALUES (?, ?, ?, ?)
-        ''', (ticket_id, response_type, sender, content))
-        
-        # Update ticket timestamp
-        cursor.execute('''
-            UPDATE tickets SET updated_at = CURRENT_TIMESTAMP WHERE ticket_id = ?
-        ''', (ticket_id,))
-        
-        response_id = cursor.lastrowid
-        conn.commit()
-        conn.close()
-        
-        return response_id
+        try:
+            with engine.connect() as conn:
+                # Insert response
+                ins = responses.insert().values(
+                    ticket_id=ticket_id,
+                    response_type=response_type,
+                    sender=sender,
+                    content=content
+                )
+                result = conn.execute(ins)
+                response_id = result.inserted_primary_key[0]
+                
+                # Update ticket timestamp
+                update = tickets.update().where(
+                    tickets.c.ticket_id == ticket_id
+                ).values(
+                    updated_at=func.current_timestamp()
+                )
+                conn.execute(update)
+                
+                return response_id
+        except SQLAlchemyError as e:
+            logger.error(f"Error adding response: {e}")
+            raise
     
     def get_tickets(self, status=None):
         """Get all tickets or filter by status"""
-        conn = sqlite3.connect(SQLITE_PATH)
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
-        
-        if status:
-            cursor.execute('SELECT * FROM tickets WHERE status = ? ORDER BY updated_at DESC', (status,))
-        else:
-            cursor.execute('SELECT * FROM tickets ORDER BY updated_at DESC')
-        
-        tickets = [dict(row) for row in cursor.fetchall()]
-        conn.close()
-        
-        return tickets
+        try:
+            with engine.connect() as conn:
+                if status:
+                    query = select(tickets).where(tickets.c.status == status).order_by(tickets.c.updated_at.desc())
+                else:
+                    query = select(tickets).order_by(tickets.c.updated_at.desc())
+                result = conn.execute(query)
+                return [dict(row) for row in result]
+        except SQLAlchemyError as e:
+            logger.error(f"Error getting tickets: {e}")
+            raise
     
     def get_ticket(self, ticket_id):
         """Get specific ticket with responses"""
-        conn = sqlite3.connect(SQLITE_PATH)
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
-        
-        # Get ticket
-        cursor.execute('SELECT * FROM tickets WHERE ticket_id = ?', (ticket_id,))
-        ticket = cursor.fetchone()
-        
-        if ticket:
-            ticket = dict(ticket)
-            
-            # Get responses
-            cursor.execute('SELECT * FROM responses WHERE ticket_id = ? ORDER BY created_at ASC', (ticket_id,))
-            ticket['responses'] = [dict(row) for row in cursor.fetchall()]
-            
-            # Get attachments
-            cursor.execute('SELECT * FROM attachments WHERE ticket_id = ? ORDER BY created_at ASC', (ticket_id,))
-            ticket['attachments'] = [dict(row) for row in cursor.fetchall()]
-        
-        conn.close()
-        return ticket
+        try:
+            with engine.connect() as conn:
+                # Get ticket
+                query = select(tickets).where(tickets.c.ticket_id == ticket_id)
+                result = conn.execute(query)
+                ticket = result.fetchone()
+                
+                if ticket:
+                    ticket = dict(ticket)
+                    
+                    # Get responses
+                    query = select(responses).where(
+                        responses.c.ticket_id == ticket_id
+                    ).order_by(responses.c.created_at.asc())
+                    result = conn.execute(query)
+                    ticket['responses'] = [dict(row) for row in result]
+                    
+                    # Get attachments
+                    query = select(attachments).where(
+                        attachments.c.ticket_id == ticket_id
+                    ).order_by(attachments.c.created_at.asc())
+                    result = conn.execute(query)
+                    ticket['attachments'] = [dict(row) for row in result]
+                    
+                return ticket
+        except SQLAlchemyError as e:
+            logger.error(f"Error getting ticket: {e}")
+            raise
     
     def update_ticket_status(self, ticket_id, status):
         """Update ticket status"""
-        conn = sqlite3.connect(SQLITE_PATH)
-        cursor = conn.cursor()
-        
-        cursor.execute('''
-            UPDATE tickets SET status = ?, updated_at = CURRENT_TIMESTAMP 
-            WHERE ticket_id = ?
-        ''', (status, ticket_id))
-        
-        conn.commit()
-        conn.close()
-
-# Ensure database directory exists
-os.makedirs(os.path.dirname(SQLITE_PATH), exist_ok=True)
+        try:
+            with engine.connect() as conn:
+                query = tickets.update().where(
+                    tickets.c.ticket_id == ticket_id
+                ).values(
+                    status=status,
+                    updated_at=datetime.now()
+                )
+                conn.execute(query)
+                conn.commit()
+        except SQLAlchemyError as e:
+            logger.error(f"Error updating ticket status: {e}")
+            raise
 
 # Initialize ticketing system and create database
 ticketing = TicketingSystem()
-
-# Pre-create empty database if it doesn't exist
-if not os.path.exists(SQLITE_PATH):
-    logger.info(f"Creating new database at {SQLITE_PATH}")
-    conn = sqlite3.connect(SQLITE_PATH)
-    conn.close()
-    logger.info("Database created successfully")
 
 class EmailProcessor:
     def __init__(self):
@@ -461,8 +492,20 @@ def background_worker():
             logging.exception('Background worker error: %s', e)
         time.sleep(EMAIL_CHECK_INTERVAL)
 
-# Start background worker
-Thread(target=background_worker, daemon=True).start()
+# Start background worker with error handling
+def start_worker():
+    try:
+        logger.info("Starting background worker thread")
+        Thread(target=background_worker, daemon=True).start()
+    except Exception as e:
+        logger.exception("Failed to start background worker: %s", str(e))
+
+# Only start the worker if explicitly enabled
+if os.getenv('ENABLE_BACKGROUND_WORKER', '').lower() in ('1', 'true', 'yes'):
+    try:
+        start_worker()
+    except Exception as e:
+        logger.exception("Error during startup: %s", str(e))
 
 # Flask Routes
 @app.route('/')
@@ -474,32 +517,33 @@ def analytics():
     """Analytics page showing ticket statistics"""
     try:
         logger.info('Starting analytics page render')
-        conn = sqlite3.connect(SQLITE_PATH)
-        logger.info(f'Connected to database at {SQLITE_PATH}')
-        cursor = conn.cursor()
-        
+        conn = engine.connect()
+        logger.info('Connected to database')
+
         # Get total tickets
-        cursor.execute('SELECT COUNT(*) FROM tickets')
-        total_tickets = cursor.fetchone()[0] if cursor.fetchone() else 0
+        total_query = select(func.count()).select_from(tickets)
+        total_tickets = conn.execute(total_query).scalar() or 0
         logger.info(f'Found {total_tickets} total tickets')
         
         # Get tickets by status
-        cursor.execute('''
-            SELECT status, COUNT(*) as count 
-            FROM tickets 
-            GROUP BY status
-        ''')
-        status_counts = dict(cursor.fetchall())
+        status_query = select(tickets.c.status, func.count().label('count')).group_by(tickets.c.status)
+        result = conn.execute(status_query)
+        status_counts = dict((row.status, row.count) for row in result)
         
         # Get tickets by day (last 7 days)
-        cursor.execute('''
-            SELECT date(created_at) as day, COUNT(*) as count
-            FROM tickets
-            WHERE created_at >= date('now', '-7 days')
-            GROUP BY day
-            ORDER BY day DESC
-        ''')
-        daily_counts = dict(cursor.fetchall())
+        seven_days_ago = text("NOW() - INTERVAL '7 days'")
+        daily_query = select(
+            func.date(tickets.c.created_at).label('day'),
+            func.count().label('count')
+        ).where(
+            tickets.c.created_at >= seven_days_ago
+        ).group_by(
+            text('day')
+        ).order_by(
+            text('day DESC')
+        )
+        result = conn.execute(daily_query)
+        daily_counts = dict((row.day.strftime('%Y-%m-%d'), row.count) for row in result)
         
         conn.close()
         
@@ -610,34 +654,56 @@ def test_connection():
 def get_tickets():
     """Get all tickets or filter by status"""
     try:
+        # Get query parameters
         status = request.args.get('status')
         logger.info(f"Fetching tickets with status filter: {status}")
-        tickets = ticketing.get_tickets(status)
-        return jsonify(tickets)
+        
+        logger.info("About to connect to database...")
+        # Connect and execute query
+        with engine.connect() as conn:
+            logger.info("Database connection established")
+            # Check if we have any tickets at all
+            logger.info("Executing count query...")
+            count_query = select(func.count()).select_from(tickets)
+            total_tickets = conn.execute(count_query).scalar() or 0
+            logger.info(f"Total tickets in database: {total_tickets}")
+            
+            logger.info("Building main query...")
+            # Build query based on status filter with explicit ordering
+            if status:
+                query = select(tickets).where(tickets.c.status == status).order_by(tickets.c.created_at.desc())
+            else:
+                query = select(tickets).order_by(tickets.c.created_at.desc())
+            
+            # Execute query and get results
+            logger.info("Executing main query...")
+            result = conn.execute(query).fetchall()
+            logger.info(f"Query executed, fetched {len(result) if result else 0} rows")
+            
+            logger.info("Converting results to list...")
+            # Convert to list of dictionaries and handle date serialization
+            ticket_list = []
+            for row in result:
+                ticket_dict = dict(row)
+                # Convert datetime objects to ISO format strings
+                for key, value in ticket_dict.items():
+                    if isinstance(value, datetime):
+                        ticket_dict[key] = value.isoformat()
+                ticket_list.append(ticket_dict)
+            
+            # Enhanced logging
+            logger.info(f"Found {len(ticket_list)} tickets matching criteria")
+            if ticket_list:
+                sample = ticket_list[0]
+                logger.info(f"Sample ticket - ID: {sample['id']}, Ticket ID: {sample['ticket_id']}, "
+                          f"Subject: {sample.get('subject', 'No subject')}, "
+                          f"Created: {sample.get('created_at', 'Unknown')}")
+            
+            return jsonify(ticket_list)
+            
     except Exception as e:
-        logger.exception("Error getting tickets: %s", e)
+        logger.exception("Error getting tickets")
         return jsonify({'error': str(e)}), 500
-        conn = sqlite3.connect(SQLITE_PATH)
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
-        
-        if status:
-            cursor.execute('SELECT * FROM tickets WHERE status = ? ORDER BY updated_at DESC', (status,))
-        else:
-            cursor.execute('SELECT * FROM tickets ORDER BY updated_at DESC')
-        
-        rows = cursor.fetchall()
-        tickets = [dict(row) for row in rows]
-        logger.info(f"Found {len(tickets)} tickets")
-        
-        return jsonify(tickets)
-        
-    except Exception as e:
-        logger.error(f"Error getting tickets: {e}")
-        return jsonify({'error': str(e)}), 500
-    finally:
-        if 'conn' in locals():
-            conn.close()
 
 @app.route('/api/tickets/<ticket_id>')
 def get_ticket(ticket_id):
@@ -679,18 +745,22 @@ def update_ticket_status(ticket_id):
 
 @app.route('/api/attachments/<int:attachment_id>')
 def download_attachment(attachment_id):
-    conn = sqlite3.connect(SQLITE_PATH)
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    
-    cursor.execute('SELECT * FROM attachments WHERE id = ?', (attachment_id,))
-    attachment = cursor.fetchone()
-    conn.close()
-    
-    if attachment and os.path.exists(attachment['file_path']):
-        return send_file(attachment['file_path'], as_attachment=True, download_name=attachment['filename'])
-    
-    return jsonify({'error': 'File not found'}), 404
+    """Download an attachment by its ID"""
+    try:
+        with engine.connect() as conn:
+            # Get attachment details from database
+            query = select(attachments).where(attachments.c.id == attachment_id)
+            attachment = conn.execute(query).fetchone()
+            
+            if attachment and os.path.exists(attachment.file_path):
+                return send_file(attachment.file_path, 
+                               as_attachment=True, 
+                               download_name=attachment.filename)
+            
+            return jsonify({'error': 'File not found'}), 404
+    except SQLAlchemyError as e:
+        logger.error(f"Error downloading attachment {attachment_id}: {e}")
+        return jsonify({'error': 'Database error'}), 500
 
 
 @app.route('/api/admin/check-emails', methods=['POST'])
@@ -828,6 +898,46 @@ def email_checker():
             logging.exception('Email checker error: %s', e)
             time.sleep(60)  # Wait longer if there's an error
 
-# Note: email polling is intended to be run from the separate worker process
-# (see `email_worker.py` and Procfile). To run locally for development you can
-# start the web app with `python app.py` and the worker with `python email_worker.py`.
+# Catch-all error handler
+@app.errorhandler(Exception)
+def handle_error(error):
+    logger.exception("Unhandled error occurred: %s", str(error))
+    return jsonify({'error': 'Internal Server Error', 'message': str(error)}), 500
+
+def create_app():
+    """Application factory for gunicorn/waitress"""
+    return app
+
+if __name__ == '__main__':
+    import signal
+    import sys
+    
+    def signal_handler(sig, frame):
+        logger.info("Received signal %s, shutting down gracefully...", sig)
+        sys.exit(0)
+    
+    # Register signal handlers
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+    
+    try:
+        logger.info("Starting email ticketing system...")
+        # Force stdout to flush immediately
+        import functools
+        print = functools.partial(print, flush=True)
+        
+        # Start the appropriate server
+        if os.getenv('FLASK_ENV') == 'development':
+            logger.info("Starting Flask development server...")
+            app.run(debug=True, host='0.0.0.0', port=8000, use_reloader=False)
+        else:
+            # Use waitress for production on Windows
+            from waitress import serve
+            logger.info("Starting waitress server on port 8000...")
+            serve(app, host='0.0.0.0', port=8000, threads=4, _quiet=True)
+    except KeyboardInterrupt:
+        logger.info("Received keyboard interrupt, shutting down...")
+        sys.exit(0)
+    except Exception as e:
+        logger.exception("Fatal error occurred during startup: %s", str(e))
+        sys.exit(1)
