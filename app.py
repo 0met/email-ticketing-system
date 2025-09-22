@@ -375,12 +375,15 @@ class EmailProcessor:
     
     def check_emails(self):
         """Check for new emails and process them"""
+        mail = None
         try:
+            logger.info("Starting email check")
             mail = self.connect_imap()
             if not mail:
                 logger.error("Failed to connect to IMAP server")
                 return
             
+            logger.info("Connected to IMAP server, selecting inbox")
             mail.select('inbox')
             # Use configurable search criteria (default UNSEEN). Can be set to 'ALL' for debugging.
             criteria = EMAIL_SEARCH_CRITERIA or 'UNSEEN'
@@ -533,6 +536,21 @@ def get_status():
             imap.logout()
             
     return jsonify(status_info)
+
+@app.route('/api/force-check')
+def force_check():
+    """Force an immediate email check"""
+    try:
+        logger.info("Starting forced email check")
+        email_processor.check_emails()
+        return jsonify({"status": "success", "message": "Email check completed"})
+    except Exception as e:
+        logger.exception("Error during forced email check")
+        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({'success': True})
+    except Exception as e:
+        logger.exception("Force check failed")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/test-connection')
 def test_connection():
