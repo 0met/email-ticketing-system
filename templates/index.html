@@ -6,34 +6,34 @@
     <title>Mail Ticketing System</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-      :root{--bg:#eef7fb;--card:#ffffff;--muted:#475569;--accent:#0f62fe;--accent-2:#06b6d4}
-      *{box-sizing:border-box}
-      body{font-family:Inter,system-ui,Segoe UI,Roboto,-apple-system,Arial;background:var(--bg);margin:0;color:#0b1220}
+  :root{--bg:#ffffff;--page-bg:#f3f7fb;--card:#ffffff;--muted:#475569;--accent:#0f62fe;--accent-2:#06b6d4;--splash:#eef6ff}
+  *{box-sizing:border-box}
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,-apple-system,Arial;background:var(--bg);margin:0;color:#0b1220}
 
       /* Layout: top nav + left sidebar + content */
-      .topbar{height:56px;background:#ffffff;border-bottom:1px solid #eef2f7;display:flex;align-items:center;padding:0 20px;box-shadow:0 1px 0 rgba(15,23,42,0.02)}
+  .topbar{height:64px;background:linear-gradient(90deg,var(--splash),#ffffff);border-bottom:1px solid #eef2f7;display:flex;align-items:center;padding:0 24px;box-shadow:0 1px 0 rgba(15,23,42,0.02)}
       .topbar .brand{display:flex;align-items:center;gap:12px}
       .topbar .brand .logo{width:36px;height:36px;background:#f1f5f9;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--accent);font-weight:700;border:1px solid #eef2f7}
-  .layout{display:flex;min-height:calc(100vh - 56px)}
-  .sidebar{width:80px;background:transparent;padding:18px 10px}
+  .layout{display:flex;min-height:calc(100vh - 64px);background:var(--page-bg)}
+  .sidebar{width:88px;background:transparent;padding:18px 10px}
   .sidebar .icon{height:8px;display:block;margin:18px 0;width:100%;}
       .sidebar .nav-item{padding:10px 12px;border-radius:6px;color:var(--muted);display:flex;align-items:center;gap:10px;cursor:pointer}
       .sidebar .nav-item.active{background:#f1f5ff;color:var(--accent);font-weight:600}
 
-  .content{flex:1;padding:28px}
+  .content{flex:1;padding:36px}
   .content .card{background:var(--card);border-radius:14px;padding:20px;border:1px solid rgba(15,23,42,0.04);box-shadow:0 10px 30px rgba(2,6,23,0.06)}
 
   /* hero stats */
   .hero{display:flex;gap:20px;align-items:flex-start;margin-bottom:18px}
   .greeting{flex:1}
   .stats-row{display:flex;gap:12px;align-items:center}
-  .stat-card{background:linear-gradient(180deg,#ffffff,#fbfdff);padding:18px;border-radius:12px;min-width:140px;border:1px solid rgba(15,23,42,0.03);box-shadow:0 8px 24px rgba(2,6,23,0.04)}
+  .stat-card{background:var(--card);padding:18px;border-radius:12px;min-width:140px;border-left:6px solid var(--accent-2);box-shadow:0 8px 24px rgba(2,6,23,0.03)}
   .stat-number{font-size:28px;font-weight:700}
   .stat-label{color:var(--muted);font-size:13px}
 
   /* main content areas */
   .main-grid{display:grid;grid-template-columns:1fr 320px;gap:20px}
-  .large-panel{border-radius:14px;padding:18px;background:linear-gradient(180deg,#ffffff,#fbfdff);border:1px solid rgba(15,23,42,0.03);box-shadow:0 12px 30px rgba(2,6,23,0.05)}
+  .large-panel{border-radius:14px;padding:18px;background:linear-gradient(180deg,var(--card),#fbfdff);border:1px solid rgba(15,23,42,0.03);box-shadow:0 12px 30px rgba(2,6,23,0.05)}
   .kanban{display:flex;gap:12px}
   .kanban-column{background:#f8fbff;border-radius:10px;padding:12px;min-width:180px}
   .kanban-card{background:#fff;border-radius:8px;padding:10px;margin-bottom:8px;border:1px solid #eef4ff}
@@ -45,6 +45,12 @@
   .controls{display:flex;gap:8px;align-items:center}
   .btn{background:var(--accent);color:white;padding:8px 12px;border-radius:6px;border:none;cursor:pointer}
       .muted{color:var(--muted)}
+
+  /* ticket modal */
+  .modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,0.45);display:none;align-items:center;justify-content:center}
+  .modal{background:var(--card);width:880px;border-radius:12px;padding:18px}
+  .modal .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .form-control{width:100%;padding:8px;border-radius:6px;border:1px solid #eef2f7}
 
       @media(max-width:900px){.sidebar{display:none}.layout{flex-direction:column}}
     </style>
@@ -85,15 +91,26 @@
           </div>
         </div>
 
+        <div style="display:flex;gap:12px;align-items:center;margin-bottom:10px">
+          <input id="searchBox" placeholder="Search tickets..." class="form-control" style="max-width:420px" onkeyup="onSearchKey(event)" />
+          <select id="statusFilter" class="form-control" style="width:160px" onchange="onFilterChange()">
+            <option value="">All status</option>
+            <option value="open">Open</option>
+            <option value="pending">Pending</option>
+            <option value="closed">Closed</option>
+          </select>
+          <div style="margin-left:auto" class="muted">Showing <span id="totalCount">0</span> tickets</div>
+        </div>
+
         <div class="main-grid">
           <div class="large-panel">
             <h3 style="margin-top:0">Upcoming / Recent Tickets</h3>
             <div style="height:220px;overflow:auto;margin-top:12px">
               <table style="width:100%;border-collapse:collapse">
                 <thead><tr><th style="text-align:left;color:var(--muted)">Ticket</th><th style="text-align:left;color:var(--muted)">Subject</th><th style="text-align:left;color:var(--muted)">Status</th></tr></thead>
-                <tbody id="ticketsTableBody">
-                  <tr><td colspan="3" class="muted">Loading...</td></tr>
-                </tbody>
+                  <tbody id="ticketsTableBody">
+                    <tr><td colspan="3" class="muted">Loading...</td></tr>
+                  </tbody>
               </table>
             </div>
           </div>
@@ -152,13 +169,16 @@
 
       async function refreshTickets(){ await fetchTickets(); }
 
-      async function fetchTickets(){
+      // fetchTickets accepts optional query and status for server-side filtering
+      async function fetchTickets(q='', status=''){
         try{
-          const res = await fetch('/api/tickets');
+          const params = new URLSearchParams(); if(q) params.set('q', q); if(status) params.set('status', status);
+          const url = '/api/tickets' + (params.toString() ? ('?' + params.toString()) : '');
+          const res = await fetch(url);
           ticketsData = await res.json();
           renderTicketsTable();
         }catch(e){
-          console.error(e); document.getElementById('ticketsTableBody').innerHTML = '<tr><td colspan="5" class="muted">Failed to load tickets</td></tr>';
+          console.error(e); document.getElementById('ticketsTableBody').innerHTML = '<tr><td colspan="3" class="muted">Failed to load tickets</td></tr>';
         }
       }
 
@@ -169,11 +189,22 @@
         ticketsData.forEach(t=>{
           const statusClass = t.status === 'closed' ? 'status-closed' : (t.status === 'pending' ? 'status-pending' : 'status-open');
           const tr = document.createElement('tr');
+          tr.dataset.ticketId = t.ticket_id;
+          tr.style.cursor = 'pointer';
           tr.innerHTML = `
             <td style="width:120px">${escapeHtml(t.ticket_id)}</td>
             <td>${escapeHtml(t.subject||'No subject')}</td>
             <td style="width:120px"><span class="status-badge ${statusClass}">${escapeHtml(t.status)}</span></td>
           `;
+          // click row to open modal
+          tr.addEventListener('click', ()=> openTicketModal(t.ticket_id));
+
+          // inline actions cell
+          const actionTd = document.createElement('td');
+          actionTd.style.width = '160px';
+          actionTd.innerHTML = `<button class="btn" onclick="event.stopPropagation(); openReplyInline('${t.ticket_id}')">Reply</button> <button style="background:#ef4444" onclick="event.stopPropagation(); updateTicketStatusInline('${t.ticket_id}','closed')">Close</button>`;
+          tr.appendChild(actionTd);
+
           tbody.appendChild(tr);
         });
         document.getElementById('totalCount').innerText = ticketsData.length;
@@ -184,6 +215,23 @@
         document.getElementById('stat1').innerText = ticketsData.filter(t => new Date(t.created_at) > new Date(Date.now() - 24*60*60*1000)).length;
         document.getElementById('stat2').innerText = '—';
         document.getElementById('stat3').innerText = open;
+      }
+
+      // inline reply and status actions
+      function openReplyInline(ticketId){
+        openTicketModal(ticketId);
+        // focus reply textarea
+        setTimeout(()=> document.getElementById('replyText').focus(), 200);
+      }
+
+      async function updateTicketStatusInline(ticketId, status){
+        const token = sessionStorage.getItem('adminToken');
+        const headers = {'Content-Type':'application/json'}; if(token) headers['X-Admin-Token'] = token;
+        try{
+          const res = await fetch(`/api/tickets/${ticketId}`,{method:'PUT',headers,body:JSON.stringify({status})});
+          const j = await res.json(); document.getElementById('adminOutput').innerText = JSON.stringify(j,null,2);
+          fetchTickets(document.getElementById('searchBox').value.trim(), document.getElementById('statusFilter').value);
+        }catch(e){ alert('Failed to update status') }
       }
 
       function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[c]) }
@@ -225,11 +273,130 @@
 
       // initial
       fetchTickets();
+
+      // search and filter helpers
+      function onSearchKey(e){ if(e.key === 'Enter'){ fetchTickets(document.getElementById('searchBox').value.trim(), document.getElementById('statusFilter').value); } }
+      function onFilterChange(){ fetchTickets(document.getElementById('searchBox').value.trim(), document.getElementById('statusFilter').value); }
+
+      // --- Kanban drag/drop ---
+      // make kanban columns droppable and cards draggable
+      function enableKanbanDrag(){
+        document.querySelectorAll('.kanban-column').forEach(col => {
+          col.addEventListener('dragover', e=> e.preventDefault());
+          col.addEventListener('drop', async e=>{
+            e.preventDefault(); const ticketId = e.dataTransfer.getData('text/plain');
+            if(!ticketId) return;
+            const targetStatus = col.querySelector('strong').innerText.toLowerCase();
+            // update server
+            const token = sessionStorage.getItem('adminToken');
+            const headers = {'Content-Type':'application/json'}; if(token) headers['X-Admin-Token'] = token;
+            try{
+              await fetch(`/api/tickets/${ticketId}`,{method:'PUT',headers,body:JSON.stringify({status: targetStatus})});
+              fetchTickets(document.getElementById('searchBox').value.trim(), document.getElementById('statusFilter').value);
+            }catch(e){ console.error(e); alert('Failed to move card') }
+          });
+        });
+        // make cards draggable
+        document.querySelectorAll('.kanban-card').forEach(card=>{
+          card.setAttribute('draggable','true');
+          // assume card text contains ticket id in this demo; better to embed data- attribute
+          card.addEventListener('dragstart', e=>{
+            // try to read data-ticket attribute
+            const ticketId = card.dataset.ticketId || card.textContent.trim().split(' ')[0];
+            e.dataTransfer.setData('text/plain', ticketId);
+          });
+        });
+      }
+
+      // call enableKanbanDrag after DOM updates
+      setTimeout(enableKanbanDrag, 500);
+    </script>
+
+    <script>
+      // Modal interaction and ticket actions
+      let currentModalTicket = null;
+
+      function openTicketModal(ticketId){
+        currentModalTicket = ticketId;
+        document.getElementById('modal-backdrop').style.display = 'flex';
+        document.getElementById('modal-title').innerText = 'Ticket ' + ticketId;
+        document.getElementById('ticket-content').innerText = 'Loading...';
+        fetch(`/api/tickets/${ticketId}`).then(r=>r.json()).then(j=>{
+          if(j.error){ document.getElementById('ticket-content').innerText = 'Error loading ticket'; return }
+          document.getElementById('ticket-content').innerText = j.content || '(no content)';
+          const atts = document.getElementById('ticket-attachments');
+          if(j.attachments && j.attachments.length){ atts.innerHTML = j.attachments.map(a=>`<div><a href="/api/attachments/${a.id}" target="_blank">${a.filename}</a></div>`).join('') } else { atts.innerHTML = '' }
+        }).catch(e=>{ document.getElementById('ticket-content').innerText = 'Error loading ticket' });
+      }
+
+      function closeTicketModal(){
+        document.getElementById('modal-backdrop').style.display = 'none';
+        currentModalTicket = null;
+        document.getElementById('replyText').value = '';
+      }
+
+      async function sendReplyModal(){
+        if(!currentModalTicket) return alert('No ticket');
+        const content = document.getElementById('replyText').value.trim();
+        if(!content) return alert('Enter reply');
+        const token = sessionStorage.getItem('adminToken');
+        const headers = {'Content-Type':'application/json'}; if(token) headers['X-Admin-Token'] = token;
+        try{
+          const res = await fetch(`/api/tickets/${currentModalTicket}/responses`,{method:'POST',headers,body:JSON.stringify({content})});
+          const j = await res.json();
+          document.getElementById('adminOutput').innerText = JSON.stringify(j,null,2);
+          closeTicketModal();
+          fetchTickets();
+        }catch(e){ alert('Failed to send reply') }
+      }
+
+      async function updateTicketStatusModal(status){
+        if(!currentModalTicket) return alert('No ticket');
+        const token = sessionStorage.getItem('adminToken');
+        const headers = {'Content-Type':'application/json'}; if(token) headers['X-Admin-Token'] = token;
+        try{
+          const res = await fetch(`/api/tickets/${currentModalTicket}`,{method:'PUT',headers,body:JSON.stringify({status})});
+          const j = await res.json(); document.getElementById('adminOutput').innerText = JSON.stringify(j,null,2);
+          closeTicketModal(); fetchTickets();
+        }catch(e){ alert('Failed to update status') }
+      }
     </script>
 
     <!-- Ticket Modal (kept minimal) -->
-    <div id="ticket-modal" style="display:none;">
-      <!-- can add ticket detail modal here later -->
+    <div id="modal-root">
+      <div id="modal-backdrop" class="modal-backdrop">
+        <div class="modal" role="dialog" aria-modal="true">
+          <div class="modal-header">
+            <h3 id="modal-title">Ticket</h3>
+            <button onclick="closeTicketModal()" style="background:none;border:none;font-size:20px;cursor:pointer">&times;</button>
+          </div>
+          <div id="modal-body">
+            <div style="display:flex;gap:12px">
+              <div style="flex:1">
+                <div id="ticket-content" style="margin-bottom:12px;color:var(--muted)"></div>
+                <div id="ticket-attachments" style="margin-bottom:12px"></div>
+              </div>
+              <div style="width:260px">
+                <div style="margin-bottom:12px"><strong>Actions</strong></div>
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <button class="btn" onclick="updateTicketStatusModal('open')">Mark Open</button>
+                  <button class="btn" onclick="updateTicketStatusModal('pending')" style="background:#f59e0b">Pending</button>
+                  <button class="btn" onclick="updateTicketStatusModal('closed')" style="background:#10b981">Close</button>
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-top:12px">
+              <h4>Reply</h4>
+              <textarea id="replyText" class="form-control" rows="6" placeholder="Write your response..."></textarea>
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <button class="btn" onclick="sendReplyModal()">Send Reply</button>
+                <button class="btn" onclick="closeTicketModal()" style="background:#6b7280">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </body>
 </html>
