@@ -23,8 +23,16 @@ import time
 app = Flask(__name__)
 CORS(app)
 
-# Basic logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
+# Enhanced logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s [%(name)s] %(message)s',
+    handlers=[
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger('email-ticketing')
+logger.setLevel(logging.DEBUG)
 
 # Configuration - Set these as environment variables
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'imap.gmail.com')
@@ -249,18 +257,18 @@ class EmailProcessor:
             mail = imaplib.IMAP4_SSL(EMAIL_HOST, EMAIL_PORT)
             logging.info('SSL connection established, attempting login')
             mail.login(EMAIL_USER, EMAIL_PASS)
-            logging.info('IMAP login successful')
+            logger.info('IMAP login successful')
             
             # Test mailbox access
             mail.select('INBOX')
             status, messages = mail.search(None, 'ALL')
-            logging.info(f'Mailbox access test: status={status}, message count={len(messages[0].split()) if messages[0] else 0}')
+            logger.info(f'Mailbox access test: status={status}, message count={len(messages[0].split()) if messages[0] else 0}')
             
             return mail
         except Exception as e:
-            logging.error(f"IMAP connection failed: {str(e)}")
+            logger.error(f"IMAP connection failed: {str(e)}")
             if isinstance(e, imaplib.IMAP4.error):
-                logging.error(f"IMAP4 specific error: {str(e)}")
+                logger.error(f"IMAP4 specific error: {str(e)}")
             return None
     
     def process_email(self, msg):
@@ -458,7 +466,7 @@ def test_connection():
     """Test Gmail connection and return detailed status"""
     try:
         # Test IMAP connection
-        logging.info("Testing IMAP connection...")
+        logger.info("Testing IMAP connection...")
         imap = email_processor.connect_imap()
         if not imap:
             return jsonify({
@@ -473,7 +481,7 @@ def test_connection():
             }), 500
             
         # Test SMTP connection
-        logging.info("Testing SMTP connection...")
+        logger.info("Testing SMTP connection...")
         smtp = smtplib.SMTP(SMTP_HOST, SMTP_PORT)
         smtp.starttls()
         smtp.login(EMAIL_USER, EMAIL_PASS)
@@ -500,7 +508,7 @@ def test_connection():
         })
         
     except Exception as e:
-        logging.exception("Connection test failed")
+        logger.exception("Connection test failed")
         return jsonify({
             'success': False,
             'error': str(e),
