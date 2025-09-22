@@ -345,11 +345,12 @@ class EmailProcessor:
     
     def check_emails(self):
         """Check for new emails and process them"""
-        mail = self.connect_imap()
-        if not mail:
-            return
-        
         try:
+            mail = self.connect_imap()
+            if not mail:
+                logger.error("Failed to connect to IMAP server")
+                return
+            
             mail.select('inbox')
             # Use configurable search criteria (default UNSEEN). Can be set to 'ALL' for debugging.
             criteria = EMAIL_SEARCH_CRITERIA or 'UNSEEN'
@@ -434,6 +435,45 @@ Thread(target=background_worker, daemon=True).start()
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/analytics')
+def analytics():
+    """Analytics page showing ticket statistics"""
+    try:
+        conn = sqlite3.connect(SQLITE_PATH)
+        cursor = conn.cursor()
+        
+        # Get total tickets
+        cursor.execute('SELECT COUNT(*) FROM tickets')
+        total_tickets = cursor.fetchone()[0]
+        
+        # Get tickets by status
+        cursor.execute('''
+            SELECT status, COUNT(*) as count 
+            FROM tickets 
+            GROUP BY status
+        ''')
+        status_counts = dict(cursor.fetchall())
+        
+        # Get tickets by day (last 7 days)
+        cursor.execute('''
+            SELECT date(created_at) as day, COUNT(*) as count
+            FROM tickets
+            WHERE created_at >= date('now', '-7 days')
+            GROUP BY day
+            ORDER BY day DESC
+        ''')
+        daily_counts = dict(cursor.fetchall())
+        
+        conn.close()
+        
+        return render_template('analytics.html',
+                            total_tickets=total_tickets,
+                            status_counts=status_counts,
+                            daily_counts=daily_counts)
+    except Exception as e:
+        logger.error(f"Error in analytics: {e}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/status')
 def get_status():
