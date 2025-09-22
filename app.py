@@ -475,7 +475,7 @@ def update_ticket_status(ticket_id):
 
 @app.route('/api/attachments/<int:attachment_id>')
 def download_attachment(attachment_id):
-    conn = sqlite3.connect('tickets.db')
+    conn = sqlite3.connect(SQLITE_PATH)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     
