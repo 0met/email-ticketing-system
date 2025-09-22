@@ -517,9 +517,13 @@ def test_connection():
 
 @app.route('/api/tickets')
 def get_tickets():
-    status = request.args.get('status')
-    tickets = ticketing.get_tickets(status)
-    return jsonify(tickets)
+    try:
+        status = request.args.get('status')
+        tickets = ticketing.get_tickets(status)
+        return jsonify(tickets)
+    except Exception as e:
+        logger.error(f"Error getting tickets: {e}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/tickets/<ticket_id>')
 def get_ticket(ticket_id):
