@@ -173,10 +173,10 @@
       // Sidebar navigation
       function showSection(name){
         document.querySelectorAll('.sidebar .nav-item').forEach(n=>n.classList.toggle('active', n.dataset.section===name));
-        document.getElementById('tickets').style.display = name==='tickets' ? '' : 'none';
-        document.getElementById('analytics').style.display = name==='analytics' ? '' : 'none';
-        document.getElementById('settings').style.display = name==='settings' ? '' : 'none';
-        if(name==='analytics') renderAnalytics();
+        const elTickets = document.getElementById('tickets'); if(elTickets) elTickets.style.display = name==='tickets' ? '' : 'none';
+        const elAnalytics = document.getElementById('analytics'); if(elAnalytics) elAnalytics.style.display = name==='analytics' ? '' : 'none';
+        const elSettings = document.getElementById('settings'); if(elSettings) elSettings.style.display = name==='settings' ? '' : 'none';
+        if(name==='analytics' && elAnalytics) renderAnalytics();
       }
 
       function saveToken(){
