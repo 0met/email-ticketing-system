@@ -245,12 +245,22 @@ class EmailProcessor:
     def connect_imap(self):
         """Connect to IMAP server"""
         try:
+            logging.info(f'Connecting to {EMAIL_HOST}:{EMAIL_PORT} as {EMAIL_USER}')
             mail = imaplib.IMAP4_SSL(EMAIL_HOST, EMAIL_PORT)
+            logging.info('SSL connection established, attempting login')
             mail.login(EMAIL_USER, EMAIL_PASS)
             logging.info('IMAP login successful')
+            
+            # Test mailbox access
+            mail.select('INBOX')
+            status, messages = mail.search(None, 'ALL')
+            logging.info(f'Mailbox access test: status={status}, message count={len(messages[0].split()) if messages[0] else 0}')
+            
             return mail
         except Exception as e:
-            logging.error(f"IMAP connection failed: {e}")
+            logging.error(f"IMAP connection failed: {str(e)}")
+            if isinstance(e, imaplib.IMAP4.error):
+                logging.error(f"IMAP4 specific error: {str(e)}")
             return None
     
     def process_email(self, msg):
