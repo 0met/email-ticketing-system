@@ -37,6 +37,10 @@ EMAIL_CHECK_INTERVAL = int(os.getenv('EMAIL_CHECK_INTERVAL', 30))
 EMAIL_SEARCH_CRITERIA = os.getenv('EMAIL_SEARCH_CRITERIA', 'UNSEEN')
 ADMIN_TOKEN = os.getenv('ADMIN_TOKEN', '')
 UPLOAD_FOLDER = 'attachments'
+# Database and upload paths
+SQLITE_PATH = os.getenv('SQLITE_PATH', 'tickets.db')
+UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER', 'attachments')
+
 # Enable dev-only endpoints (unprotected) when set to true. Defaults to False in production.
 ENABLE_DEV_ENDPOINTS = os.getenv('ENABLE_DEV_ENDPOINTS', 'false').lower() in ('1', 'true', 'yes')
 
@@ -49,7 +53,7 @@ class TicketingSystem:
     
     def init_database(self):
         """Initialize SQLite database"""
-        conn = sqlite3.connect('tickets.db')
+        conn = sqlite3.connect(SQLITE_PATH)
         cursor = conn.cursor()
         
         # Create tickets table
@@ -111,7 +115,7 @@ class TicketingSystem:
         conn.close()
 
     def is_message_processed(self, msg_hash):
-        conn = sqlite3.connect('tickets.db')
+        conn = sqlite3.connect(SQLITE_PATH)
         cursor = conn.cursor()
         cursor.execute('SELECT 1 FROM processed_messages WHERE msg_hash = ?', (msg_hash,))
         exists = cursor.fetchone() is not None
@@ -119,7 +123,7 @@ class TicketingSystem:
         return exists
 
     def mark_message_processed(self, msg_hash):
-        conn = sqlite3.connect('tickets.db')
+        conn = sqlite3.connect(SQLITE_PATH)
         cursor = conn.cursor()
         try:
             cursor.execute('INSERT OR IGNORE INTO processed_messages (msg_hash) VALUES (?)', (msg_hash,))
@@ -136,7 +140,7 @@ class TicketingSystem:
         """Create new ticket"""
         ticket_id = self.generate_ticket_id(f"{subject}{sender_email}")
         
-        conn = sqlite3.connect('tickets.db')
+        conn = sqlite3.connect(SQLITE_PATH)
         cursor = conn.cursor()
         
         cursor.execute('''
@@ -158,7 +162,7 @@ class TicketingSystem:
     
     def add_response(self, ticket_id, response_type, sender, content):
         """Add response to ticket"""
-        conn = sqlite3.connect('tickets.db')
+        conn = sqlite3.connect(SQLITE_PATH)
         cursor = conn.cursor()
         
         cursor.execute('''
@@ -179,7 +183,7 @@ class TicketingSystem:
     
     def get_tickets(self, status=None):
         """Get all tickets or filter by status"""
-        conn = sqlite3.connect('tickets.db')
+        conn = sqlite3.connect(SQLITE_PATH)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         
@@ -195,7 +199,7 @@ class TicketingSystem:
     
     def get_ticket(self, ticket_id):
         """Get specific ticket with responses"""
-        conn = sqlite3.connect('tickets.db')
+        conn = sqlite3.connect(SQLITE_PATH)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         
@@ -219,7 +223,7 @@ class TicketingSystem:
     
     def update_ticket_status(self, ticket_id, status):
         """Update ticket status"""
-        conn = sqlite3.connect('tickets.db')
+        conn = sqlite3.connect(SQLITE_PATH)
         cursor = conn.cursor()
         
         cursor.execute('''
