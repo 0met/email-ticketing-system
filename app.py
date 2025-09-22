@@ -432,12 +432,80 @@ def get_status():
     """Get email checking status"""
     imap = email_processor.connect_imap()
     is_connected = imap is not None
-    if imap:
-        imap.logout()
-    return jsonify({
+    status_info = {
         'connected': is_connected,
-        'last_check': datetime.now().isoformat()
-    })
+        'last_check': datetime.now().isoformat(),
+        'email_user': EMAIL_USER,
+        'imap_host': EMAIL_HOST,
+        'imap_port': EMAIL_PORT
+    }
+    
+    if imap:
+        try:
+            imap.select('INBOX')
+            status, messages = imap.search(None, 'ALL')
+            status_info['mailbox_status'] = status
+            status_info['message_count'] = len(messages[0].split()) if messages[0] else 0
+        except Exception as e:
+            status_info['error'] = str(e)
+        finally:
+            imap.logout()
+            
+    return jsonify(status_info)
+
+@app.route('/api/test-connection')
+def test_connection():
+    """Test Gmail connection and return detailed status"""
+    try:
+        # Test IMAP connection
+        logging.info("Testing IMAP connection...")
+        imap = email_processor.connect_imap()
+        if not imap:
+            return jsonify({
+                'success': False,
+                'error': 'Failed to establish IMAP connection',
+                'config': {
+                    'host': EMAIL_HOST,
+                    'port': EMAIL_PORT,
+                    'user': EMAIL_USER,
+                    'has_password': bool(EMAIL_PASS)
+                }
+            }), 500
+            
+        # Test SMTP connection
+        logging.info("Testing SMTP connection...")
+        smtp = smtplib.SMTP(SMTP_HOST, SMTP_PORT)
+        smtp.starttls()
+        smtp.login(EMAIL_USER, EMAIL_PASS)
+        smtp.quit()
+        
+        # Get mailbox statistics
+        imap.select('INBOX')
+        status, messages = imap.search(None, 'ALL')
+        total_messages = len(messages[0].split()) if messages[0] else 0
+        
+        status, messages = imap.search(None, 'UNSEEN')
+        unread_messages = len(messages[0].split()) if messages[0] else 0
+        
+        imap.logout()
+        
+        return jsonify({
+            'success': True,
+            'imap_status': 'Connected',
+            'smtp_status': 'Connected',
+            'mailbox_stats': {
+                'total_messages': total_messages,
+                'unread_messages': unread_messages
+            }
+        })
+        
+    except Exception as e:
+        logging.exception("Connection test failed")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'error_type': type(e).__name__
+        }), 500
 
 @app.route('/api/tickets')
 def get_tickets():
